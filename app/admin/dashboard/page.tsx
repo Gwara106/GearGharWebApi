@@ -10,7 +10,7 @@ interface AdminData {
   lastName: string;
   email: string;
 }
-// for the example using - static data aile lai
+// for the example using static data
 const dashboardStats = [
   { label: 'Total Orders', value: '1,234', change: '+12%', icon: ShoppingCart },
   { label: 'Total Users', value: '8,567', change: '+8%', icon: Users },
