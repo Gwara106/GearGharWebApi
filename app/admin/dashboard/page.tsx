@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
       window.location.href = '/admin/login';
       return;
     }
-
+    
     try {
       setAdmin(JSON.parse(adminData));
     } catch {
