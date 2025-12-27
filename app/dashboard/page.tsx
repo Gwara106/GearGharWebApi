@@ -12,7 +12,7 @@ interface UserData {
   phone?: string;
   address?: string;
 }
-
+//functions for dashboard
 export default function DashboardPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
