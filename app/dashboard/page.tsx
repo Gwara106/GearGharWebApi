@@ -12,14 +12,14 @@ interface UserData {
   phone?: string;
   address?: string;
 }
-
+//functions for dashboard
 export default function DashboardPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Checking if user is authenticated
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
 
@@ -52,7 +52,7 @@ export default function DashboardPage() {
   if (!user) {
     return null;
   }
-
+  //making the front end
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container">
@@ -103,7 +103,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
+                
           {/* Content */}
           <div className="lg:col-span-3">
             {activeTab === 'profile' && (
@@ -135,7 +135,7 @@ export default function DashboardPage() {
                       />
                     </div>
                   </div>
-
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address

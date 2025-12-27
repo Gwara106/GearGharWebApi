@@ -2,6 +2,7 @@ import Link from 'next/link';
 import LoginForm from '@/components/LoginForm';
 
 export default function LoginPage() {
+  // Login Page UI
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <div className="w-full max-w-md">

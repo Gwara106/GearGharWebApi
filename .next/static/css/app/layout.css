@@ -659,6 +659,9 @@ pre,
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
   --tw-ring-color: hsl(var(--primary) / 0.2);
 }
+.static{
+  position: static;
+}
 .fixed{
   position: fixed;
 }

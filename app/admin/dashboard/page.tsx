@@ -10,7 +10,7 @@ interface AdminData {
   lastName: string;
   email: string;
 }
-
+// for the example using static data
 const dashboardStats = [
   { label: 'Total Orders', value: '1,234', change: '+12%', icon: ShoppingCart },
   { label: 'Total Users', value: '8,567', change: '+8%', icon: Users },
@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
       window.location.href = '/admin/login';
       return;
     }
-
+    
     try {
       setAdmin(JSON.parse(adminData));
     } catch {
@@ -75,6 +75,7 @@ export default function AdminDashboardPage() {
             </div>
             <span className="text-lg font-bold text-gray-900">GearGhar Admin</span>
           </Link>
+
 
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-700">
