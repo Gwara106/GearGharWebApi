@@ -6,11 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@/lib/validation';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const {
     register,
@@ -38,9 +40,8 @@ export default function LoginForm() {
         return;
       }
 
-      // Store token and redirect
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
+      // Store token and redirect using auth context
+      login(result.token, result.user);
       window.location.href = '/dashboard';
     } catch (err) {
       setError('An error occurred. Please try again.');
