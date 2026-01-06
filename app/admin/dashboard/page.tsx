@@ -1,15 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BarChart3, Users, Package, ShoppingCart, LogOut, Settings, Plus } from 'lucide-react';
-
-interface AdminData {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import { useAuth } from '@/src/contexts/AuthContext';
 // for the example using static data
 const dashboardStats = [
   { label: 'Total Orders', value: '1,234', change: '+12%', icon: ShoppingCart },
@@ -26,33 +19,10 @@ const recentOrders = [
 ];
 
 export default function AdminDashboardPage() {
-  const [admin, setAdmin] = useState<AdminData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if admin is authenticated
-    const token = localStorage.getItem('admin-token');
-    const adminData = localStorage.getItem('admin');
-
-    if (!token || !adminData) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    
-    try {
-      setAdmin(JSON.parse(adminData));
-    } catch {
-      localStorage.removeItem('admin-token');
-      localStorage.removeItem('admin');
-      window.location.href = '/admin/login';
-    }
-
-    setIsLoading(false);
-  }, []);
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('admin-token');
-    localStorage.removeItem('admin');
+    logout();
     window.location.href = '/admin/login';
   };
 
@@ -60,7 +30,8 @@ export default function AdminDashboardPage() {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!admin) {
+  if (!isAuthenticated() || !user || user.role !== 'admin') {
+    window.location.href = '/admin/login';
     return null;
   }
 
@@ -79,7 +50,7 @@ export default function AdminDashboardPage() {
 
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-700">
-              Welcome, {admin.firstName} {admin.lastName}
+              Welcome, {user.firstName} {user.lastName}
             </span>
             <button className="p-2 hover:bg-gray-100 rounded-lg transition">
               <Settings size={20} />

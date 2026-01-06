@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { registerSchema, type RegisterInput } from '@/lib/validation';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +14,7 @@ export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const { login } = useAuth();
 
   const {
     register,
@@ -36,6 +38,8 @@ export default function RegisterForm() {
           lastName: data.lastName,
           email: data.email,
           password: data.password,
+          confirmPassword: data.confirmPassword,
+          agreeToTerms: data.agreeToTerms,
         }),
       });
 
@@ -46,9 +50,11 @@ export default function RegisterForm() {
         return;
       }
 
-      setSuccess('Account created successfully! Redirecting to login...');
+      // Auto-login user after successful registration
+      login(result.token, result.user);
+      setSuccess('Account created successfully! Redirecting...');
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = '/dashboard';
       }, 2000);
     } catch (err) {
       setError('An error occurred. Please try again.');

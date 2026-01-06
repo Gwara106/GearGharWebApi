@@ -1,47 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { LogOut, User, ShoppingBag, Heart, Settings, MapPin, Phone } from 'lucide-react';
+import { useAuth } from '@/src/contexts/AuthContext';
 
-interface UserData {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  address?: string;
-}
-//functions for dashboard
 export default function DashboardPage() {
-  const [user, setUser] = useState<UserData | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Checking if user is authenticated
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-
-    if (!token || !userData) {
-      window.location.href = '/login';
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(userData));
-    } catch {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-
-    setIsLoading(false);
-  }, []);
+  const { user, logout, isLoading } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     window.location.href = '/';
   };
 

@@ -1,6 +1,6 @@
-/*!*************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./app/globals.css ***!
-  \*************************************************************************************************************************************************************************************************************************************************************/
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./app/globals.css ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap");
 
 *, ::before, ::after{
@@ -112,7 +112,7 @@
 }
 
 /*
-! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
 */
 
 /*
@@ -680,6 +680,9 @@ pre,
 .left-0{
   left: 0px;
 }
+.left-3{
+  left: 0.75rem;
+}
 .right-0{
   right: 0px;
 }
@@ -746,6 +749,9 @@ pre,
 }
 .ml-4{
   margin-left: 1rem;
+}
+.mr-1{
+  margin-right: 0.25rem;
 }
 .mr-2{
   margin-right: 0.5rem;
@@ -879,6 +885,12 @@ pre,
 .max-w-3xl{
   max-width: 48rem;
 }
+.max-w-4xl{
+  max-width: 56rem;
+}
+.max-w-7xl{
+  max-width: 80rem;
+}
 .max-w-lg{
   max-width: 32rem;
 }
@@ -906,6 +918,15 @@ pre,
 .animate-bounce{
   animation: bounce 1s infinite;
 }
+@keyframes spin{
+
+  to{
+    transform: rotate(360deg);
+  }
+}
+.animate-spin{
+  animation: spin 1s linear infinite;
+}
 .cursor-not-allowed{
   cursor: not-allowed;
 }
@@ -917,6 +938,9 @@ pre,
 }
 .grid-cols-1{
   grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.grid-cols-2{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .grid-cols-3{
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -932,6 +956,9 @@ pre,
 }
 .items-center{
   align-items: center;
+}
+.justify-end{
+  justify-content: flex-end;
 }
 .justify-center{
   justify-content: center;
@@ -1028,6 +1055,9 @@ pre,
 .overflow-y-auto{
   overflow-y: auto;
 }
+.whitespace-nowrap{
+  white-space: nowrap;
+}
 .rounded{
   border-radius: 0.25rem;
 }
@@ -1036,6 +1066,9 @@ pre,
 }
 .rounded-lg{
   border-radius: var(--radius, 0.5rem);
+}
+.rounded-md{
+  border-radius: calc(var(--radius, 0.5rem) - 2px);
 }
 .rounded-xl{
   border-radius: 0.75rem;
@@ -1048,6 +1081,9 @@ pre,
 }
 .border-b{
   border-bottom-width: 1px;
+}
+.border-b-2{
+  border-bottom-width: 2px;
 }
 .border-t{
   border-top-width: 1px;
@@ -1090,6 +1126,9 @@ pre,
 .border-primary{
   border-color: hsl(var(--primary));
 }
+.border-primary\/20{
+  border-color: hsl(var(--primary) / 0.2);
+}
 .border-red-200{
   --tw-border-opacity: 1;
   border-color: rgb(254 202 202 / var(--tw-border-opacity, 1));
@@ -1101,6 +1140,10 @@ pre,
 .border-white{
   --tw-border-opacity: 1;
   border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
+}
+.bg-black{
+  --tw-bg-opacity: 1;
+  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
 }
 .bg-black\/40{
   background-color: rgb(0 0 0 / 0.4);
@@ -1165,6 +1208,17 @@ pre,
 .bg-primary\/10{
   background-color: hsl(var(--primary) / 0.1);
 }
+.bg-primary\/5{
+  background-color: hsl(var(--primary) / 0.05);
+}
+.bg-purple-100{
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 232 255 / var(--tw-bg-opacity, 1));
+}
+.bg-red-100{
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 226 226 / var(--tw-bg-opacity, 1));
+}
 .bg-red-50{
   --tw-bg-opacity: 1;
   background-color: rgb(254 242 242 / var(--tw-bg-opacity, 1));
@@ -1183,6 +1237,9 @@ pre,
 .bg-yellow-100{
   --tw-bg-opacity: 1;
   background-color: rgb(254 249 195 / var(--tw-bg-opacity, 1));
+}
+.bg-opacity-50{
+  --tw-bg-opacity: 0.5;
 }
 .bg-gradient-to-br{
   background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
@@ -1229,6 +1286,9 @@ pre,
 .p-2{
   padding: 0.5rem;
 }
+.p-3{
+  padding: 0.75rem;
+}
 .p-4{
   padding: 1rem;
 }
@@ -1237,6 +1297,14 @@ pre,
 }
 .p-8{
   padding: 2rem;
+}
+.px-2{
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-2\.5{
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
 }
 .px-3{
   padding-left: 0.75rem;
@@ -1253,6 +1321,10 @@ pre,
 .px-8{
   padding-left: 2rem;
   padding-right: 2rem;
+}
+.py-0\.5{
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
 }
 .py-1{
   padding-top: 0.25rem;
@@ -1282,17 +1354,30 @@ pre,
   padding-top: 1rem;
   padding-bottom: 1rem;
 }
+.py-8{
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
 .pb-4{
   padding-bottom: 1rem;
 }
 .pb-6{
   padding-bottom: 1.5rem;
 }
+.pl-10{
+  padding-left: 2.5rem;
+}
 .pr-10{
   padding-right: 2.5rem;
 }
+.pr-4{
+  padding-right: 1rem;
+}
 .pt-12{
   padding-top: 3rem;
+}
+.pt-4{
+  padding-top: 1rem;
 }
 .pt-6{
   padding-top: 1.5rem;
@@ -1361,6 +1446,9 @@ pre,
 .uppercase{
   text-transform: uppercase;
 }
+.capitalize{
+  text-transform: capitalize;
+}
 .leading-tight{
   line-height: 1.25;
 }
@@ -1419,8 +1507,16 @@ pre,
   --tw-text-opacity: 1;
   color: rgb(21 128 61 / var(--tw-text-opacity, 1));
 }
+.text-green-800{
+  --tw-text-opacity: 1;
+  color: rgb(22 101 52 / var(--tw-text-opacity, 1));
+}
 .text-primary{
   color: hsl(var(--primary));
+}
+.text-purple-800{
+  --tw-text-opacity: 1;
+  color: rgb(107 33 168 / var(--tw-text-opacity, 1));
 }
 .text-red-200{
   --tw-text-opacity: 1;
@@ -1441,6 +1537,10 @@ pre,
 .text-red-700{
   --tw-text-opacity: 1;
   color: rgb(185 28 28 / var(--tw-text-opacity, 1));
+}
+.text-red-800{
+  --tw-text-opacity: 1;
+  color: rgb(153 27 27 / var(--tw-text-opacity, 1));
 }
 .text-white{
   --tw-text-opacity: 1;
@@ -1579,6 +1679,11 @@ pre,
   color: rgb(185 28 28 / var(--tw-text-opacity, 1));
 }
 
+.hover\:text-red-800:hover{
+  --tw-text-opacity: 1;
+  color: rgb(153 27 27 / var(--tw-text-opacity, 1));
+}
+
 .hover\:underline:hover{
   text-decoration-line: underline;
 }
@@ -1591,6 +1696,10 @@ pre,
 
 .focus\:border-primary:focus{
   border-color: hsl(var(--primary));
+}
+
+.focus\:border-transparent:focus{
+  border-color: transparent;
 }
 
 .focus\:outline-none:focus{
@@ -1623,6 +1732,10 @@ pre,
   --tw-ring-color: rgb(255 255 255 / var(--tw-ring-opacity, 1));
 }
 
+.disabled\:cursor-not-allowed:disabled{
+  cursor: not-allowed;
+}
+
 .disabled\:bg-gray-400:disabled{
   --tw-bg-opacity: 1;
   background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1));
@@ -1631,6 +1744,10 @@ pre,
 .disabled\:bg-gray-600:disabled{
   --tw-bg-opacity: 1;
   background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
+}
+
+.disabled\:opacity-50:disabled{
+  opacity: 0.5;
 }
 
 .group:hover .group-hover\:scale-110{
@@ -1644,6 +1761,10 @@ pre,
 }
 
 @media (min-width: 640px){
+
+  .sm\:flex{
+    display: flex;
+  }
 
   .sm\:inline-flex{
     display: inline-flex;
@@ -1663,6 +1784,14 @@ pre,
 }
 
 @media (min-width: 768px){
+
+  .md\:col-span-1{
+    grid-column: span 1 / span 1;
+  }
+
+  .md\:col-span-2{
+    grid-column: span 2 / span 2;
+  }
 
   .md\:mt-0{
     margin-top: 0px;

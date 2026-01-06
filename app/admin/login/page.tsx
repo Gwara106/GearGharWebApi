@@ -6,11 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@/lib/validation';
-//admin ko login
+import { useAu } from '@/src/contexts/AuthContext';
 export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const {
     register,
@@ -23,6 +24,7 @@ export default function AdminLoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setIsLoading(true);
     setError('');
+    console.log('Attempting admin login with:', data.email);
 
     try {
       const response = await fetch('/api/auth/admin-login', {
@@ -32,15 +34,16 @@ export default function AdminLoginPage() {
       });
 
       const result = await response.json();
+      console.log('Admin login response:', result);
 
       if (!response.ok) {
         setError(result.message || 'Admin login failed');
         return;
       }
 
-      // Store token and redirect
-      localStorage.setItem('admin-token', result.token);
-      localStorage.setItem('admin', JSON.stringify(result.admin));
+      // Store token and redirect using auth context
+      login(result.token, result.admin);
+      console.log('Admin login successful, redirecting...');
       window.location.href = '/admin/dashboard';
     } catch (err) {
       setError('An error occurred. Please try again.');

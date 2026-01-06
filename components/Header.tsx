@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, X, ShoppingCart, User } from 'lucide-react';
+import { Menu, X, ShoppingCart, User, LogOut } from 'lucide-react';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { itemCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -48,10 +50,33 @@ export default function Header() {
               )}
             </Link>
 
-            <Link href="/login" className="hidden sm:inline-flex items-center space-x-1 p-2 text-gray-700 hover:text-primary transition">
-              <User size={20} />
-              <span className="text-sm font-medium">Login</span>
-            </Link>
+            {/* Auth Button - Desktop */}
+            <div className="hidden sm:flex items-center">
+              {isAuthenticated() ? (
+                <div className="flex items-center space-x-2">
+                  <Link 
+                    href="/profile" 
+                    className="flex items-center space-x-1 p-2 text-gray-700 hover:text-primary transition"
+                  >
+                    <User size={20} />
+                    <span className="text-sm font-medium">Profile</span>
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="flex items-center space-x-1 p-2 text-gray-700 hover:text-primary transition"
+                    title="Logout"
+                  >
+                    <LogOut size={20} />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <Link href="/login" className="flex items-center space-x-1 p-2 text-gray-700 hover:text-primary transition">
+                  <User size={20} />
+                  <span className="text-sm font-medium">Login</span>
+                </Link>
+              )}
+            </div>
 
             {/* Mobile Menu Button */}
             <button
@@ -78,9 +103,25 @@ export default function Header() {
             <Link href="/about" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
               About
             </Link>
-            <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              Login
-            </Link>
+            
+            {/* Mobile Auth */}
+            {isAuthenticated() ? (
+              <>
+                <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                  Profile
+                </Link>
+                <button
+                  onClick={logout}
+                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                Login
+              </Link>
+            )}
           </nav>
         )}
       </div>
