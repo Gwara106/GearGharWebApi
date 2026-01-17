@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { setTokenCookie, getTokenCookie, setUserCookie, getUserCookie, clearAuthCookies } from '../../lib/cookies';
 
 interface User {
   _id: string;
@@ -34,20 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check for existing auth on mount
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = getTokenCookie();
+    const storedUser = getUserCookie();
 
     if (storedToken && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setToken(storedToken);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        // Clear invalid data
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
+      setToken(storedToken);
+      setUser(storedUser);
     }
     setIsLoading(false);
   }, []);
@@ -55,15 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (token: string, user: User) => {
     setToken(token);
     setUser(user);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    setTokenCookie(token);
+    setUserCookie(user);
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuthCookies();
   };
 
   const isAdmin = () => {
