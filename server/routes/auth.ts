@@ -2,7 +2,6 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectToDatabase } from '../../lib/db';
-import { User } from '../../src/models/User';
 import { setTokenCookieServer, setUserCookieServer, clearAuthCookiesServer } from '../../lib/server-cookies';
 
 const router = express.Router();
@@ -146,7 +145,8 @@ router.post('/login', async (req, res) => {
 // Get user profile (protected route)
 router.get('/profile', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    // Try to get token from cookie first, then from header as fallback
+    const token = req.cookies?.auth_token || req.headers.authorization?.replace('Bearer ', '');
     
     if (!token) {
       return res.status(401).json({ 
@@ -191,7 +191,8 @@ router.get('/profile', async (req, res) => {
 // Update user profile (protected route)
 router.put('/profile', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    // Try to get token from cookie first, then from header as fallback
+    const token = req.cookies?.auth_token || req.headers.authorization?.replace('Bearer ', '');
     
     if (!token) {
       return res.status(401).json({ 
@@ -248,7 +249,7 @@ router.put('/profile', async (req, res) => {
 });
 
 // Logout user
-router.post('/logout', async (req, res) => {
+router.post('/logout', async (_req, res) => {
   // Clear auth cookies
   clearAuthCookiesServer(res);
   res.json({ message: 'Logout successful' });
