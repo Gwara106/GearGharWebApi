@@ -7,6 +7,7 @@ export interface IUserRepository {
   create(userData: Partial<IUser>): Promise<IUser>;
   updateLastLogin(userId: string): Promise<void>;
   emailExists(email: string): Promise<boolean>;
+  usernameExists(username: string): Promise<boolean>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -89,6 +90,22 @@ export class UserRepository implements IUserRepository {
     } catch (error) {
       console.error('Error checking email existence:', error);
       throw new Error('Database error while checking email');
+    }
+  }
+
+  /**
+   * Check if username already exists
+   */
+  async usernameExists(username: string): Promise<boolean> {
+    try {
+      const existingUser = await User.findOne({ 
+        username: username.trim().toLowerCase() 
+      }).select('_id').exec();
+      
+      return !!existingUser;
+    } catch (error) {
+      console.error('Error checking username existence:', error);
+      throw new Error('Database error while checking username');
     }
   }
 }

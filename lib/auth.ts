@@ -1,7 +1,7 @@
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'gearghar_secret_key_change_in_production';
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcryptjs.genSalt(10);

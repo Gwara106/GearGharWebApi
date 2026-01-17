@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test & Seed Products</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Product Database Test & Seeding</h1>
+    
+    <button onclick="checkProducts()">Check Current Products</button>
+    <button onclick="seedProducts()">Seed Products</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function checkProducts() {
+            try {
+                const response = await fetch('/api/admin/seed-simple', {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result success">
+                            <h2>Current Products Status</h2>
+                            <p><strong>Total Products:</strong> ${result.currentCount}</p>
+                            <h3>Sample Products:</h3>
+                            <pre>${JSON.stringify(result.currentProducts, null, 2)}</pre>
+                            <p><em>${result.message}</em></p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result error">
+                            <h2>Error Checking Products</h2>
+                            <p>${result.message}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h2>Network Error</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function seedProducts() {
+            try {
+                const response = await fetch('/api/admin/seed-simple', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result success">
+                            <h2>✅ Products Seeded Successfully!</h2>
+                            <p><strong>${result.message}</strong></p>
+                            <p><strong>Deleted:</strong> ${result.deletedCount} existing products</p>
+                            <p><strong>Inserted:</strong> ${result.insertedCount} new products</p>
+                            <h3>Seeded Products:</h3>
+                            <pre>${JSON.stringify(result.products, null, 2)}</pre>
+                            <p><a href="/admin/dashboard" target="_blank">Check Dashboard →</a></p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div class="result error">
+                            <h2>❌ Seeding Failed</h2>
+                            <p>${result.message}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h2>Network Error</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Auto-check on page load
+        window.onload = checkProducts;
+    </script>
+</body>
+</html>

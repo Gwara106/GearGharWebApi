@@ -43,7 +43,7 @@ export default function ManageUsersPage() {
       return;
     }
 
-    if (isAuthenticated && user?.role === 'admin') {
+    if (isAuthenticated() && user?.role === 'admin') {
       fetchUsers();
     }
   }, [isAuthenticated, isLoading, user, router]);
