@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectToDatabase } from '../../lib/db';
 import { User } from '../../src/models/User';
+import { setTokenCookieServer, setUserCookieServer, clearAuthCookiesServer } from '../../lib/server-cookies';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -58,11 +59,15 @@ router.post('/register', async (req, res) => {
 
     // Return user data without password
     const { password: _, ...userWithoutPassword } = newUser;
-    userWithoutPassword._id = result.insertedId;
+    const userWithId = { ...userWithoutPassword, _id: result.insertedId };
+
+    // Set cookies
+    setTokenCookieServer(res, token);
+    setUserCookieServer(res, userWithId);
 
     res.status(201).json({
       message: 'User registered successfully',
-      user: userWithoutPassword,
+      user: userWithId,
       token,
     });
   } catch (error) {
@@ -120,6 +125,10 @@ router.post('/login', async (req, res) => {
 
     // Return user data without password
     const { password: _, ...userWithoutPassword } = user;
+
+    // Set cookies
+    setTokenCookieServer(res, token);
+    setUserCookieServer(res, userWithoutPassword);
 
     res.json({
       message: 'Login successful',
@@ -240,9 +249,8 @@ router.put('/profile', async (req, res) => {
 
 // Logout user
 router.post('/logout', async (req, res) => {
-  // In a stateless JWT setup, logout is handled client-side
-  // by removing the token. This endpoint can be used for logging
-  // or if you implement token blacklisting.
+  // Clear auth cookies
+  clearAuthCookiesServer(res);
   res.json({ message: 'Logout successful' });
 });
 
