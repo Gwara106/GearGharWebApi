@@ -3,30 +3,72 @@
 import Link from 'next/link';
 import { BarChart3, Users, Package, ShoppingCart, LogOut, Settings, Plus } from 'lucide-react';
 import { useAuth } from '@/src/contexts/AuthContext';
-// for the example using static data
-const dashboardStats = [
-  { label: 'Total Orders', value: '1,234', change: '+12%', icon: ShoppingCart },
-  { label: 'Total Users', value: '8,567', change: '+8%', icon: Users },
-  { label: 'Total Products', value: '456', change: '+23%', icon: Package },
-  { label: 'Revenue', value: '$45,234', change: '+18%', icon: BarChart3 },
-];
+import { useState, useEffect } from 'react';
 
-const recentOrders = [
-  { id: 'ORD-001', customer: 'John Doe', amount: '$299.99', status: 'Completed', date: '2024-01-15' },
-  { id: 'ORD-002', customer: 'Jane Smith', amount: '$149.99', status: 'Pending', date: '2024-01-14' },
-  { id: 'ORD-003', customer: 'Bob Johnson', amount: '$599.99', status: 'Processing', date: '2024-01-14' },
-  { id: 'ORD-004', customer: 'Alice Brown', amount: '$89.99', status: 'Completed', date: '2024-01-13' },
-];
+interface DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  adminUsers: number;
+  regularUsers: number;
+  recentUsers: number;
+  userGrowthPercentage: number;
+  totalProducts: number;
+  activeProducts: number;
+  outOfStockProducts: number;
+  productGrowthPercentage: number;
+  totalOrders: number;
+  paidOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  orderGrowthPercentage: number;
+  totalRevenue: number;
+  revenueGrowthPercentage: number;
+  recentOrders: any[];
+}
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/admin/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const result = await response.json();
+      setDashboardData(result.data);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
     window.location.href = '/admin/login';
   };
 
-  if (isLoading) {
+  if (isLoading || dataLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
@@ -76,8 +118,19 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Stats Grid */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {dashboardStats.map(({ label, value, change, icon: Icon }) => (
+          {dashboardData && [
+            { label: 'Total Orders', value: dashboardData.totalOrders.toLocaleString(), change: `+${dashboardData.orderGrowthPercentage}%`, icon: ShoppingCart },
+            { label: 'Total Users', value: dashboardData.totalUsers.toLocaleString(), change: `+${dashboardData.userGrowthPercentage}%`, icon: Users },
+            { label: 'Total Products', value: dashboardData.totalProducts.toLocaleString(), change: `+${dashboardData.productGrowthPercentage}%`, icon: Package },
+            { label: 'Revenue', value: `$${dashboardData.totalRevenue.toLocaleString()}`, change: `+${dashboardData.revenueGrowthPercentage}%`, icon: BarChart3 },
+          ].map(({ label, value, change, icon: Icon }) => (
             <div
               key={label}
               className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition"
@@ -86,7 +139,11 @@ export default function AdminDashboardPage() {
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <Icon size={24} className="text-primary" />
                 </div>
-                <span className="text-sm font-semibold text-green-600">{change}</span>
+                <span className={`text-sm font-semibold ${
+                  parseInt(change) > 0 ? 'text-green-600' : 
+                  parseInt(change) < 0 ? 'text-red-600' : 
+                  'text-gray-600'
+                }`}>{change}</span>
               </div>
               <p className="text-gray-600 text-sm mb-1">{label}</p>
               <p className="text-3xl font-bold text-gray-900">{value}</p>
@@ -155,27 +212,35 @@ export default function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentOrders.map((order) => (
-                      <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="py-4 px-4 font-semibold text-primary">{order.id}</td>
-                        <td className="py-4 px-4 text-gray-700">{order.customer}</td>
-                        <td className="py-4 px-4 font-semibold text-gray-900">{order.amount}</td>
-                        <td className="py-4 px-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              order.status === 'Completed'
-                                ? 'bg-green-100 text-green-700'
-                                : order.status === 'Pending'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-blue-100 text-blue-700'
-                            }`}
-                          >
-                            {order.status}
-                          </span>
+                    {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
+                      dashboardData.recentOrders.map((order) => (
+                        <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                          <td className="py-4 px-4 font-semibold text-primary">{order.id}</td>
+                          <td className="py-4 px-4 text-gray-700">{order.customer}</td>
+                          <td className="py-4 px-4 font-semibold text-gray-900">{order.amount}</td>
+                          <td className="py-4 px-4">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                order.status === 'Completed'
+                                  ? 'bg-green-100 text-green-700'
+                                  : order.status === 'Pending'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-blue-100 text-blue-700'
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600 text-sm">{order.date}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-gray-500">
+                          No orders found. Orders will appear here once they are created.
                         </td>
-                        <td className="py-4 px-4 text-gray-600 text-sm">{order.date}</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

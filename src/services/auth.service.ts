@@ -30,17 +30,49 @@ export class AuthService implements IAuthService {
         };
       }
 
+      // Check if username already exists (if provided)
+      if (userData.username) {
+        const usernameExists = await this.userRepository.usernameExists(userData.username);
+        if (usernameExists) {
+          return {
+            success: false,
+            message: 'Username already taken'
+          };
+        }
+      }
+
       // Hash password
       const hashedPassword = await hashPassword(userData.password);
 
-      // Create user object
+      // Handle name fields for backward compatibility
+      let firstName = userData.firstName?.trim();
+      let lastName = userData.lastName?.trim();
+      let name = userData.name?.trim();
+
+      // If only name is provided (mobile app), split into first and last name
+      if (name && !firstName) {
+        const nameParts = name.split(' ');
+        firstName = nameParts[0] || name;
+        lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      }
+      // If firstName and lastName are provided but no name, create name
+      else if (firstName && lastName && !name) {
+        name = `${firstName} ${lastName}`;
+      }
+
+      // Create user object with all required fields for schema consistency
       const newUser = {
-        firstName: userData.firstName.trim(),
-        lastName: userData.lastName.trim(),
+        firstName: firstName || '',
+        lastName: lastName || '',
+        name: name || `${firstName} ${lastName}`.trim(),
         email: userData.email.toLowerCase(),
+        username: userData.username?.trim(),
         password: hashedPassword,
+        phoneNumber: userData.phoneNumber?.trim(),
+        profilePicture: 'default-profile.png', // Set default profile picture
         role: 'user' as const,
-        status: 'active' as const
+        status: 'active' as const,
+        lastLogin: null // Initialize lastLogin as null
       };
 
       // Save user to database
@@ -61,9 +93,14 @@ export class AuthService implements IAuthService {
           _id: createdUser._id.toString(),
           firstName: createdUser.firstName,
           lastName: createdUser.lastName,
+          name: createdUser.name,
           email: createdUser.email,
+          username: createdUser.username,
+          phoneNumber: createdUser.phoneNumber,
+          profilePicture: createdUser.profilePicture,
           role: createdUser.role,
           status: createdUser.status,
+          lastLogin: createdUser.lastLogin,
           createdAt: createdUser.createdAt,
           updatedAt: createdUser.updatedAt
         }
@@ -134,9 +171,14 @@ export class AuthService implements IAuthService {
           _id: user._id.toString(),
           firstName: user.firstName,
           lastName: user.lastName,
+          name: user.name,
           email: user.email,
+          username: user.username,
+          phoneNumber: user.phoneNumber,
+          profilePicture: user.profilePicture,
           role: user.role,
           status: user.status,
+          lastLogin: user.lastLogin,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt
         }
@@ -207,9 +249,14 @@ export class AuthService implements IAuthService {
           _id: admin._id.toString(),
           firstName: admin.firstName,
           lastName: admin.lastName,
+          name: admin.name,
           email: admin.email,
+          username: admin.username,
+          phoneNumber: admin.phoneNumber,
+          profilePicture: admin.profilePicture,
           role: admin.role,
           status: admin.status,
+          lastLogin: admin.lastLogin,
           createdAt: admin.createdAt,
           updatedAt: admin.updatedAt
         }
