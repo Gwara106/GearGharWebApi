@@ -6,11 +6,11 @@ const seedProducts = [
     name: 'Premium Safety Helmet - HD Vision',
     description: 'High-definition vision premium safety helmet with advanced impact protection and anti-scratch visor.',
     price: 299.99,
-    category: 'electronics',
+    category: 'accessories',
     brand: 'GearGhar Premium',
     sku: 'HELM-001',
     stock: 15,
-    images: ['https://images.unsplash.com/photo-1570995676569-90f6b56a29c4?w=400&h=400&fit=crop'],
+    images: ['/products/helmet-1.png'],
     status: 'active',
     tags: ['helmet', 'safety', 'premium', 'hd-vision']
   },
@@ -22,7 +22,7 @@ const seedProducts = [
     brand: 'GearGhar Sport',
     sku: 'GLOV-001',
     stock: 25,
-    images: ['https://images.unsplash.com/photo-1539077682343-0d85a6a6a9df?w=400&h=400&fit=crop'],
+    images: ['/products/gloves.jpg'],
     status: 'active',
     tags: ['gloves', 'sport', 'performance', 'grip']
   },
@@ -34,7 +34,7 @@ const seedProducts = [
     brand: 'GearGhar Pro',
     sku: 'GRIP-001',
     stock: 30,
-    images: ['https://images.unsplash.com/photo-1606405162335-5e8e9d8f8f3d?w=400&h=400&fit=crop'],
+    images: ['/products/450handlebar.png'],
     status: 'active',
     tags: ['handlebar', 'grips', 'control', 'comfort']
   },
@@ -46,7 +46,7 @@ const seedProducts = [
     brand: 'GearGhar Racing',
     sku: 'TYRE-F001',
     stock: 12,
-    images: ['https://images.unsplash.com/photo-1559056169-641ef2a8ec3f?w=400&h=400&fit=crop'],
+    images: ['/products/harleyDavidsontyres.jpg'],
     status: 'active',
     tags: ['tyres', 'racing', 'performance', 'front']
   },
@@ -58,7 +58,7 @@ const seedProducts = [
     brand: 'GearGhar Performance',
     sku: 'EXH-001',
     stock: 8,
-    images: ['https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400&h=400&fit=crop'],
+    images: ['/products/exhaust1.png'],
     status: 'active',
     tags: ['exhaust', 'carbon-fiber', 'performance', 'lightweight']
   },
@@ -70,7 +70,7 @@ const seedProducts = [
     brand: 'GearGhar Pro',
     sku: 'SUIT-001',
     stock: 10,
-    images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop'],
+    images: ['/products/jacket.jpg'],
     status: 'active',
     tags: ['suit', 'riding', 'professional', 'protection']
   },
@@ -82,7 +82,7 @@ const seedProducts = [
     brand: 'GearGhar Pro',
     sku: 'HELM-002',
     stock: 6,
-    images: ['https://images.unsplash.com/photo-1570995676569-90f6b56a29c4?w=400&h=400&fit=crop'],
+    images: ['/products/helmet-1.png'],
     status: 'active',
     tags: ['helmet', 'full-face', 'professional', 'safety']
   },
@@ -94,7 +94,7 @@ const seedProducts = [
     brand: 'GearGhar Premium',
     sku: 'GLOV-002',
     stock: 0,
-    images: ['https://images.unsplash.com/photo-1539077682343-0d85a6a6a9df?w=400&h=400&fit=crop'],
+    images: ['/products/gloves.jpg'],
     status: 'out_of_stock',
     tags: ['gloves', 'leather', 'premium', 'riding']
   }
