@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { handleDemo } from "./routes/demo";
 import { authRouter } from "./routes/auth";
+import { adminUsersRouter } from "./routes/admin-users";
 
 export function createServer() {
   const app = express();
@@ -29,6 +30,9 @@ export function createServer() {
 
   // Authentication routes
   app.use("/api/auth", authRouter);
+
+  // Admin user management routes
+  app.use("/api/admin/users", adminUsersRouter);
 
   return app;
 }

@@ -22,6 +22,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
   isAdmin: () => boolean;
   isAuthenticated: () => boolean;
 }
@@ -52,6 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserCookie(user);
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    setUserCookie(updatedUser);
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -74,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         logout,
+        updateUser,
         isAdmin,
         isAuthenticated,
       }}
