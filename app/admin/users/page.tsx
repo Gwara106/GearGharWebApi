@@ -24,7 +24,7 @@ interface Pagination {
 }
 
 export default function ManageUsersPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
   
   const [users, setUsers] = useState<User[]>([]);
@@ -43,15 +43,14 @@ export default function ManageUsersPage() {
       return;
     }
 
-    if (isAuthenticated() && user?.role === 'admin') {
+    if (isAuthenticated() && user?.role === 'admin' && token) {
       fetchUsers();
     }
-  }, [isAuthenticated, isLoading, user, router]);
+  }, [isAuthenticated, isLoading, user, token, router]);
 
   const fetchUsers = async (page = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
       const params = new URLSearchParams({
         page: page.toString(),
@@ -94,8 +93,6 @@ export default function ManageUsersPage() {
 
   const handleUpdate = async (updatedUser: Partial<User>) => {
     try {
-      const token = localStorage.getItem('token');
-      
       const response = await fetch('/api/admin/users', {
         method: 'PUT',
         headers: {
@@ -127,8 +124,6 @@ export default function ManageUsersPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      
       const response = await fetch(`/api/admin/users?userId=${userId}`, {
         method: 'DELETE',
         headers: {

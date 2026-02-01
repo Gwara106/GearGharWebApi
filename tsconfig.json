@@ -3,7 +3,7 @@
     "target": "es5",
     "lib": [
       "dom",
-      "dom.iterable", 
+      "dom.iterable",
       "es6"
     ],
     "module": "esnext",
@@ -14,7 +14,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -61,7 +61,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

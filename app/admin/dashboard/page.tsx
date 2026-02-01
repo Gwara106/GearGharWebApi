@@ -27,18 +27,19 @@ interface DashboardStats {
 }
 
 export default function AdminDashboardPage() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, token } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (isAuthenticated() && token) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, token]);
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
