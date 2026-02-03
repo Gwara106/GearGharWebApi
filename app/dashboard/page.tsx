@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
       fetchUserData();
     }
-  }, [isAuthenticated, isLoading, updateUser]);
+  }, [isAuthenticated, isLoading]);
 
   const handleLogout = () => {
     logout();

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { setTokenCookie, getTokenCookie, setUserCookie, getUserCookie, clearAuthCookies } from '../../lib/cookies';
 
 interface User {
@@ -48,31 +48,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (token: string, user: User) => {
+  const login = useCallback((token: string, user: User) => {
     setToken(token);
     setUser(user);
     setTokenCookie(token);
     setUserCookie(user);
-  };
+  }, []);
 
-  const updateUser = (updatedUser: User) => {
+  const updateUser = useCallback((updatedUser: User) => {
     setUser(updatedUser);
     setUserCookie(updatedUser);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     clearAuthCookies();
-  };
+  }, []);
 
-  const isAdmin = () => {
+  const isAdmin = useCallback(() => {
     return user?.role === 'admin';
-  };
+  }, [user]);
 
-  const isAuthenticated = () => {
+  const isAuthenticated = useCallback(() => {
     return !!user && !!token;
-  };
+  }, [user, token]);
 
   return (
     <AuthContext.Provider
