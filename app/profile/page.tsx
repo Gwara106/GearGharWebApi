@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
       fetchUserData();
     }
-  }, [isAuthenticated, isLoading, updateUser]);
+  }, [isAuthenticated, isLoading]);
 
   // Set initial image preview when user data loads
   useEffect(() => {
@@ -67,12 +67,16 @@ export default function ProfilePage() {
         if (imageUrl.startsWith('http')) {
           setImagePreview(imageUrl);
         } else if (imageUrl.startsWith('/uploads/')) {
-          setImagePreview(imageUrl);
+          // Add cache busting timestamp to force image refresh
+          const timestamp = Date.now();
+          setImagePreview(`${imageUrl}?t=${timestamp}`);
         } else if (imageUrl.includes('profiles/')) {
           // Handle old Flutter app paths - convert to users path
-          setImagePreview(imageUrl.replace('profiles/', 'users/'));
+          const timestamp = Date.now();
+          setImagePreview(`${imageUrl.replace('profiles/', 'users/')}?t=${timestamp}`);
         } else {
-          setImagePreview(`/uploads/users/${imageUrl}`);
+          const timestamp = Date.now();
+          setImagePreview(`/uploads/users/${imageUrl}?t=${timestamp}`);
         }
       }
     }
@@ -130,6 +134,25 @@ export default function ProfilePage() {
         updateUser(data.user);
       }
 
+      // Update image preview with new profile picture
+      const newImageUrl = data.user.image || data.user.profilePicture;
+      if (newImageUrl) {
+        if (newImageUrl.startsWith('http')) {
+          setImagePreview(newImageUrl);
+        } else if (newImageUrl.startsWith('/uploads/')) {
+          // Add cache busting timestamp to force image refresh
+          const timestamp = Date.now();
+          setImagePreview(`${newImageUrl}?t=${timestamp}`);
+        } else if (newImageUrl.includes('profiles/')) {
+          // Handle old Flutter app paths - convert to users path
+          const timestamp = Date.now();
+          setImagePreview(`${newImageUrl.replace('profiles/', 'users/')}?t=${timestamp}`);
+        } else {
+          const timestamp = Date.now();
+          setImagePreview(`/uploads/users/${newImageUrl}?t=${timestamp}`);
+        }
+      }
+
       setSuccess('Profile picture updated successfully!');
       setImageFile(null);
       setIsEditing(false);
@@ -152,12 +175,17 @@ export default function ProfilePage() {
     if (imageUrl.startsWith('http')) {
       return imageUrl; // Full URL
     } else if (imageUrl.startsWith('/uploads/')) {
-      return imageUrl; // Server path
+      // Add cache busting timestamp
+      const timestamp = Date.now();
+      return `${imageUrl}?t=${timestamp}`;
     } else if (imageUrl.includes('profiles/')) {
       // Handle old Flutter app paths - convert to users path
-      return imageUrl.replace('profiles/', 'users/');
+      const timestamp = Date.now();
+      return `${imageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
     } else {
-      return `/uploads/users/${imageUrl}`; // Assume it's a filename
+      // Assume it's a filename
+      const timestamp = Date.now();
+      return `/uploads/users/${imageUrl}?t=${timestamp}`;
     }
   };
 

@@ -47,11 +47,15 @@ export default function UserProfilePage() {
     if (pic.startsWith('http')) {
       return pic; // Full URL
     } else if (pic.startsWith('/uploads/')) {
-      return pic; // Server path
+      // Add cache busting timestamp
+      const timestamp = Date.now();
+      return `${pic}?t=${timestamp}`;
     } else if (pic === 'default-profile.png') {
       return '/placeholder.svg'; // Use placeholder
     } else {
-      return pic; // Assume it's a relative path
+      // Add cache busting timestamp for relative paths
+      const timestamp = Date.now();
+      return `${pic}?t=${timestamp}`;
     }
   };
 
@@ -170,6 +174,12 @@ export default function UserProfilePage() {
       const data = await response.json();
       setSuccess('Profile updated successfully!');
       setUserData(data.user);
+      
+      // Update image preview with new profile picture for cache busting
+      const newImageUrl = data.user.image || data.user.profilePicture;
+      if (newImageUrl) {
+        setImagePreview(getProfileImageUrl(newImageUrl, data.user.profilePicture));
+      }
       
       // Update auth context with new user data
       if (updateUser) {

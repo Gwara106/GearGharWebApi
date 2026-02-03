@@ -275,10 +275,9 @@ async function PUT(request, context) {
                 const filePath = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].join(uploadsDir, filename);
                 console.log('Saving file to:', filePath);
                 await (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs$2f$promises__$5b$external$5d$__$28$fs$2f$promises$2c$__cjs$29$__["writeFile"])(filePath, buffer);
-                // Update both image fields for compatibility
+                // Update profilePicture field for Flutter compatibility
                 const imagePath = `/uploads/users/${filename}`;
                 console.log('Image path for database:', imagePath);
-                updateData.image = imagePath;
                 updateData.profilePicture = imagePath;
                 console.log('Image upload completed successfully');
             } catch (error) {
