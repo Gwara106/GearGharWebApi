@@ -3,26 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/contexts/AuthContext';
-import { User, Mail, Save, Lock, Edit, Camera } from 'lucide-react';
-
-interface UserProfile {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: 'user' | 'admin';
-  status: 'active' | 'inactive';
-  createdAt: string;
-  lastLogin?: string;
-  image?: string;
-  profilePicture?: string;
-}
+import { Mail, Save, Lock, Edit, Camera } from 'lucide-react';
 
 export default function UserProfilePage() {
   const { user, isAuthenticated, isLoading, token, updateUser } = useAuth();
   const router = useRouter();
   
-  const [userData, setUserData] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -60,49 +46,49 @@ export default function UserProfilePage() {
   };
 
   useEffect(() => {
+    if (user) {
+      const imageUrl = user.image || user.profilePicture;
+      if (imageUrl) {
+        setImagePreview(getProfileImageUrl(imageUrl, user.profilePicture));
+      }
+      // Set form data from auth context user
+      setFormData({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (!isLoading && !isAuthenticated()) {
       router.push('/admin/login');
       return;
     }
 
-    // Only fetch profile data if userData is not already set
-    if (isAuthenticated() && user && token && !userData) {
-      fetchUserProfile();
-    }
-  }, [isAuthenticated, isLoading, user, token, router, userData]);
+    // Profile fetching disabled to prevent infinite loops
+    // We'll rely on auth context data and upload responses
+  }, [isAuthenticated, isLoading, router]);
 
-  const fetchUserProfile = async () => {
-    try {
-      setLoading(true);
-      
-      const response = await fetch('/api/auth/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
-      }
-
-      const data = await response.json();
-      setUserData(data.user);
+  const handleCancel = () => {
+    if (user) {
       setFormData({
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        email: data.user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
-      setImagePreview(getProfileImageUrl(data.user.image, data.user.profilePicture));
-      setError('');
-    } catch (err) {
-      setError('Failed to fetch user profile');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      setImagePreview(getProfileImageUrl(user.image, user.profilePicture));
+      setImageFile(null);
     }
+    setIsEditing(false);
+    setError('');
+    setSuccess('');
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,7 +160,6 @@ export default function UserProfilePage() {
 
       const data = await response.json();
       setSuccess('Profile updated successfully!');
-      setUserData(data.user);
       
       // Update image preview with new profile picture for cache busting
       const newImageUrl = data.user.image || data.user.profilePicture;
@@ -211,16 +196,16 @@ export default function UserProfilePage() {
   };
 
   const handleCancel = () => {
-    if (userData) {
+    if (user) {
       setFormData({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
-      setImagePreview(getProfileImageUrl(userData.image, userData.profilePicture));
+      setImagePreview(getProfileImageUrl(user.image, user.profilePicture));
       setImageFile(null);
     }
     setIsEditing(false);
@@ -280,7 +265,7 @@ export default function UserProfilePage() {
           )}
 
           {/* Profile Form */}
-          {userData && (
+          {user && (
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               {/* Profile Header */}
               <div className="bg-gradient-to-r from-primary to-primary/80 p-8">
@@ -300,11 +285,11 @@ export default function UserProfilePage() {
                       {imagePreview ? (
                         <img 
                           src={imagePreview} 
-                          alt={`${userData.firstName} ${userData.lastName}`}
+                          alt={`${user.firstName} ${user.lastName}`}
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
-                        `${userData.firstName[0]}${userData.lastName[0]}`
+                        `${user.firstName[0]}${user.lastName[0]}`
                       )}
                     </div>
                     <button
@@ -325,14 +310,14 @@ export default function UserProfilePage() {
                   </div>
                   <div className="text-white">
                     <h2 className="text-3xl font-bold">
-                      {userData.firstName} {userData.lastName}
+                      {user.firstName} {user.lastName}
                     </h2>
                     <p className="text-white/80 flex items-center mt-2">
                       <Mail size={16} className="mr-2" />
-                      {userData.email}
+                      {user.email}
                     </p>
                     <p className="text-white/60 text-sm mt-1">
-                      Member since {new Date(userData.createdAt).toLocaleDateString()}
+                      Member since {new Date(user.createdAt).toLocaleDateString()}
                     </p>
                     <div className="mt-3">
                       <p className="text-white/70 text-sm">
@@ -508,11 +493,11 @@ export default function UserProfilePage() {
                         </label>
                         <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            userData.role === 'admin' 
+                            user.role === 'admin' 
                               ? 'bg-purple-100 text-purple-800' 
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {userData.role}
+                            {user.role}
                           </span>
                         </div>
                       </div>
@@ -521,7 +506,7 @@ export default function UserProfilePage() {
                           Member Since
                         </label>
                         <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-                          {new Date(userData.createdAt).toLocaleDateString()}
+                          {new Date(user.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>

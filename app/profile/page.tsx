@@ -23,41 +23,11 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Fetch fresh user data from API when component mounts
+  // Profile fetching disabled to prevent infinite loops
+  // We'll rely on auth context data and upload responses
   useEffect(() => {
-    if (isAuthenticated() && !isLoading) {
-      const fetchUserData = async () => {
-        try {
-          const getCookie = (name: string) => {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop()?.split(';').shift();
-            return null;
-          };
-
-          const token = getCookie('auth_token');
-          if (!token) return;
-
-          const response = await fetch('/api/auth/profile', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.user && updateUser) {
-              updateUser(data.user);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch user data:', error);
-        }
-      };
-
-      fetchUserData();
-    }
-  }, [isAuthenticated, isLoading]); // Removed updateUser from dependencies
+    // No profile fetching - use auth context data only
+  }, []);
 
   // Set initial image preview when user data loads
   useEffect(() => {
@@ -128,10 +98,13 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
+      console.log('Upload response:', data);
+      console.log('New image URL from response:', data.user.image || data.user.profilePicture);
       
       // Update user data
       if (updateUser) {
         updateUser(data.user);
+        console.log('Updated user data in auth context');
       }
 
       // Update image preview with new profile picture
@@ -139,18 +112,27 @@ export default function ProfilePage() {
       if (newImageUrl) {
         if (newImageUrl.startsWith('http')) {
           setImagePreview(newImageUrl);
+          console.log('Set imagePreview to HTTP URL:', newImageUrl);
         } else if (newImageUrl.startsWith('/uploads/')) {
           // Add cache busting timestamp to force image refresh
           const timestamp = Date.now();
-          setImagePreview(`${newImageUrl}?t=${timestamp}`);
+          const cacheBustedUrl = `${newImageUrl}?t=${timestamp}`;
+          setImagePreview(cacheBustedUrl);
+          console.log('Set imagePreview to cache-busted URL:', cacheBustedUrl);
         } else if (newImageUrl.includes('profiles/')) {
           // Handle old Flutter app paths - convert to users path
           const timestamp = Date.now();
-          setImagePreview(`${newImageUrl.replace('profiles/', 'users/')}?t=${timestamp}`);
+          const cacheBustedUrl = `${newImageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
+          setImagePreview(cacheBustedUrl);
+          console.log('Set imagePreview to converted URL:', cacheBustedUrl);
         } else {
           const timestamp = Date.now();
-          setImagePreview(`/uploads/users/${newImageUrl}?t=${timestamp}`);
+          const cacheBustedUrl = `/uploads/users/${newImageUrl}?t=${timestamp}`;
+          setImagePreview(cacheBustedUrl);
+          console.log('Set imagePreview to constructed URL:', cacheBustedUrl);
         }
+      } else {
+        console.log('No new image URL found in response');
       }
 
       setSuccess('Profile picture updated successfully!');
@@ -242,9 +224,9 @@ export default function ProfilePage() {
                   {/* Profile Picture with Camera Icon */}
                   <div className="relative inline-block mb-4">
                     <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center overflow-hidden">
-                      {getProfileImageUrl() ? (
+                      {imagePreview ? (
                         <img 
-                          src={getProfileImageUrl()} 
+                          src={imagePreview} 
                           alt={`${user.firstName} ${user.lastName}`}
                           className="w-full h-full object-cover"
                         />
