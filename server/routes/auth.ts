@@ -1,11 +1,14 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectToDatabase } from '../../lib/db';
+import { ObjectId } from 'mongodb';
 import { setTokenCookieServer, setUserCookieServer, clearAuthCookiesServer } from '../../lib/server-cookies';
+import { uploadSingleUserImage } from '../middleware/upload';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -51,7 +54,11 @@ router.post('/register', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: result.insertedId, email },
+      { 
+        userId: result.insertedId.toString(), 
+        email,
+        role: 'user'
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -117,7 +124,11 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { 
+        userId: user._id.toString(), 
+        email: user.email,
+        role: user.role 
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -253,6 +264,107 @@ router.post('/logout', async (_req, res) => {
   // Clear auth cookies
   clearAuthCookiesServer(res);
   res.json({ message: 'Logout successful' });
+});
+
+// PUT /api/auth/:id - Update user profile with image support
+router.put('/:id', uploadSingleUserImage, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, email, currentPassword, newPassword } = req.body;
+    
+    // Try to get token from cookie first, then from header as fallback
+    const token = req.cookies?.auth_token || req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ 
+        message: 'No token provided' 
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+    
+    // Users can only update their own profile
+    if (decoded.userId !== id) {
+      return res.status(403).json({ 
+        message: 'You can only update your own profile' 
+      });
+    }
+
+    // Connect to database
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
+    // Check if user exists
+    const user = await usersCollection.findOne({ _id: id });
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found' 
+      });
+    }
+
+    // Prepare update object
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (email) updateData.email = email;
+
+    // Handle password change if provided
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ 
+          message: 'Current password is required to change password' 
+        });
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ 
+          message: 'Current password is incorrect' 
+        });
+      }
+
+      // Hash new password
+      const saltRounds = 12;
+      updateData.password = await bcrypt.hash(newPassword, saltRounds);
+    }
+
+    // Add image path if uploaded (update both fields for compatibility)
+    if (req.file) {
+      const imagePath = `/uploads/users/${req.file.filename}`;
+      updateData.image = imagePath;
+      updateData.profilePicture = imagePath;
+    }
+
+    // Update user
+    await usersCollection.updateOne(
+      { _id: id },
+      { $set: updateData }
+    );
+
+    // Get updated user
+    const updatedUser = await usersCollection.findOne({ _id: id });
+    const { password: _, ...userWithoutPassword } = updatedUser;
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ 
+        message: 'Invalid token' 
+      });
+    }
+    console.error('Update profile error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
 });
 
 export { router as authRouter };

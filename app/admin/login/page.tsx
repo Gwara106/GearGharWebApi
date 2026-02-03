@@ -27,12 +27,13 @@ export default function AdminLoginPage() {
     console.log('Attempting admin login with:', data.email);
 
     try {
-      const response = await fetch('/api/auth/admin-login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
+      console.log('Login response status:', response.status);
       const result = await response.json();
       console.log('Admin login response:', result);
 
@@ -41,13 +42,27 @@ export default function AdminLoginPage() {
         return;
       }
 
+      // Check if user has admin role
+      if (result.user.role !== 'admin') {
+        setError('Access denied. Admin privileges required.');
+        console.log('User role is not admin:', result.user.role);
+        return;
+      }
+
       // Store token and redirect using auth context
-      login(result.token, result.admin);
-      console.log('Admin login successful, redirecting...');
-      window.location.href = '/admin/dashboard';
+      console.log('Calling login function with:', { token: result.token, user: result.user });
+      login(result.token, result.user);
+      console.log('Admin login successful, checking cookies...');
+      
+      // Check if cookies were set
+      setTimeout(() => {
+        console.log('Cookies after login:', document.cookie);
+        console.log('Redirecting to dashboard...');
+        window.location.href = '/admin/dashboard';
+      }, 500);
     } catch (err) {
+      console.error('Login error:', err);
       setError('An error occurred. Please try again.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }

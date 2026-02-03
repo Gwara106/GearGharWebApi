@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { setTokenCookie, getTokenCookie, setUserCookie, getUserCookie, clearAuthCookies } from '../../lib/cookies';
 
 interface User {
@@ -14,6 +14,8 @@ interface User {
   updatedAt: string;
   phone?: string;
   address?: string;
+  profilePicture?: string;
+  image?: string;
 }
 
 interface AuthContextType {
@@ -22,6 +24,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
   isAdmin: () => boolean;
   isAuthenticated: () => boolean;
 }
@@ -45,26 +48,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (token: string, user: User) => {
+  const login = useCallback((token: string, user: User) => {
     setToken(token);
     setUser(user);
     setTokenCookie(token);
     setUserCookie(user);
-  };
+  }, []);
 
-  const logout = () => {
+  const updateUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+    setUserCookie(updatedUser);
+  }, []);
+
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     clearAuthCookies();
-  };
+  }, []);
 
-  const isAdmin = () => {
+  const isAdmin = useCallback(() => {
     return user?.role === 'admin';
-  };
+  }, [user]);
 
-  const isAuthenticated = () => {
+  const isAuthenticated = useCallback(() => {
     return !!user && !!token;
-  };
+  }, [user, token]);
 
   return (
     <AuthContext.Provider
@@ -74,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         logout,
+        updateUser,
         isAdmin,
         isAuthenticated,
       }}

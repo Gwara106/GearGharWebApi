@@ -1,13 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LogOut, User, ShoppingBag, Heart, Settings, MapPin, Phone } from 'lucide-react';
 import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('profile');
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, updateUser, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    // Dashboard doesn't need to fetch profile data - it can use auth context user data
+    // Keeping this disabled to prevent unnecessary API calls
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -30,9 +35,17 @@ export default function DashboardPage() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden sticky top-20">
               <div className="p-6 border-b border-gray-200">
-                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4">
-                  {user.firstName[0]}{user.lastName[0]}
-                </div>
+                {user?.profilePicture || user?.image ? (
+                  <img
+                    src={user.profilePicture || user.image}
+                    alt="Profile"
+                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg mx-auto mb-4"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4">
+                    {user.firstName[0]}{user.lastName[0]}
+                  </div>
+                )}
                 <h3 className="text-lg font-bold text-gray-900 text-center">
                   {user.firstName} {user.lastName}
                 </h3>
