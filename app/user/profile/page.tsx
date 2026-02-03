@@ -63,6 +63,16 @@ export default function UserProfilePage() {
     }
   }, [user]);
 
+  // Update image preview when user data changes (for cross-page consistency)
+  useEffect(() => {
+    if (user) {
+      const imageUrl = user.image || user.profilePicture;
+      if (imageUrl) {
+        setImagePreview(getProfileImageUrl(imageUrl, user.profilePicture));
+      }
+    }
+  }, [user?.image, user?.profilePicture]);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated()) {
       router.push('/admin/login');

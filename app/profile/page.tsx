@@ -98,13 +98,10 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
-      console.log('Upload response:', data);
-      console.log('New image URL from response:', data.user.image || data.user.profilePicture);
       
       // Update user data
       if (updateUser) {
         updateUser(data.user);
-        console.log('Updated user data in auth context');
       }
 
       // Update image preview with new profile picture
@@ -112,27 +109,21 @@ export default function ProfilePage() {
       if (newImageUrl) {
         if (newImageUrl.startsWith('http')) {
           setImagePreview(newImageUrl);
-          console.log('Set imagePreview to HTTP URL:', newImageUrl);
         } else if (newImageUrl.startsWith('/uploads/')) {
           // Add cache busting timestamp to force image refresh
           const timestamp = Date.now();
           const cacheBustedUrl = `${newImageUrl}?t=${timestamp}`;
           setImagePreview(cacheBustedUrl);
-          console.log('Set imagePreview to cache-busted URL:', cacheBustedUrl);
         } else if (newImageUrl.includes('profiles/')) {
           // Handle old Flutter app paths - convert to users path
           const timestamp = Date.now();
           const cacheBustedUrl = `${newImageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
           setImagePreview(cacheBustedUrl);
-          console.log('Set imagePreview to converted URL:', cacheBustedUrl);
         } else {
           const timestamp = Date.now();
           const cacheBustedUrl = `/uploads/users/${newImageUrl}?t=${timestamp}`;
           setImagePreview(cacheBustedUrl);
-          console.log('Set imagePreview to constructed URL:', cacheBustedUrl);
         }
-      } else {
-        console.log('No new image URL found in response');
       }
 
       setSuccess('Profile picture updated successfully!');
@@ -149,7 +140,7 @@ export default function ProfilePage() {
   };
 
   const getProfileImageUrl = () => {
-    if (imagePreview) return imagePreview;
+    // Prioritize auth context user data for consistency across pages
     const imageUrl = user?.image || user?.profilePicture;
     if (!imageUrl) return '';
     
@@ -224,9 +215,9 @@ export default function ProfilePage() {
                   {/* Profile Picture with Camera Icon */}
                   <div className="relative inline-block mb-4">
                     <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center overflow-hidden">
-                      {imagePreview ? (
+                      {getProfileImageUrl() ? (
                         <img 
-                          src={imagePreview} 
+                          src={getProfileImageUrl()} 
                           alt={`${user.firstName} ${user.lastName}`}
                           className="w-full h-full object-cover"
                         />
