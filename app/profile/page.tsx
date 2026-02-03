@@ -32,7 +32,8 @@ export default function ProfilePage() {
   // Set initial image preview when user data loads
   useEffect(() => {
     if (user) {
-      const imageUrl = user.image || user.profilePicture;
+      // Prioritize profilePicture over image (backend updates profilePicture)
+      const imageUrl = user.profilePicture || user.image;
       if (imageUrl) {
         if (imageUrl.startsWith('http')) {
           setImagePreview(imageUrl);
@@ -98,14 +99,18 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
+      console.log('Upload response:', data);
+      console.log('Current user data before update:', user);
       
       // Update user data
       if (updateUser) {
         updateUser(data.user);
+        console.log('Called updateUser with:', data.user);
       }
 
       // Update image preview with new profile picture
-      const newImageUrl = data.user.image || data.user.profilePicture;
+      const newImageUrl = data.user.profilePicture || data.user.image;
+      console.log('New image URL from response:', newImageUrl);
       if (newImageUrl) {
         if (newImageUrl.startsWith('http')) {
           setImagePreview(newImageUrl);
@@ -140,8 +145,10 @@ export default function ProfilePage() {
   };
 
   const getProfileImageUrl = () => {
-    // Prioritize auth context user data for consistency across pages
-    const imageUrl = user?.image || user?.profilePicture;
+    // Prioritize profilePicture over image (backend updates profilePicture)
+    const imageUrl = user?.profilePicture || user?.image;
+    console.log('getProfileImageUrl called - user data:', { image: user?.image, profilePicture: user?.profilePicture });
+    console.log('getProfileImageUrl - final imageUrl:', imageUrl);
     if (!imageUrl) return '';
     
     // Handle different path formats
@@ -150,15 +157,19 @@ export default function ProfilePage() {
     } else if (imageUrl.startsWith('/uploads/')) {
       // Add cache busting timestamp
       const timestamp = Date.now();
-      return `${imageUrl}?t=${timestamp}`;
+      const cacheBustedUrl = `${imageUrl}?t=${timestamp}`;
+      console.log('getProfileImageUrl - returning cache-busted URL:', cacheBustedUrl);
+      return cacheBustedUrl;
     } else if (imageUrl.includes('profiles/')) {
       // Handle old Flutter app paths - convert to users path
       const timestamp = Date.now();
-      return `${imageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
+      const cacheBustedUrl = `${imageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
+      return cacheBustedUrl;
     } else {
       // Assume it's a filename
       const timestamp = Date.now();
-      return `/uploads/users/${imageUrl}?t=${timestamp}`;
+      const cacheBustedUrl = `/uploads/users/${imageUrl}?t=${timestamp}`;
+      return cacheBustedUrl;
     }
   };
 
