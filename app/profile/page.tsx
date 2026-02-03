@@ -2,19 +2,164 @@
 
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { User, Mail, Calendar, Shield, LogOut, ShoppingBag, Settings } from 'lucide-react';
+import { User, Mail, Calendar, Shield, LogOut, ShoppingBag, Settings, Camera, Edit } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, logout, isLoading, updateUser } = useAuth();
   const router = useRouter();
+  
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated()) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Fetch fresh user data from API when component mounts
+  useEffect(() => {
+    if (isAuthenticated() && !isLoading) {
+      const fetchUserData = async () => {
+        try {
+          const getCookie = (name: string) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop()?.split(';').shift();
+            return null;
+          };
+
+          const token = getCookie('auth_token');
+          if (!token) return;
+
+          const response = await fetch('/api/auth/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user && updateUser) {
+              updateUser(data.user);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+        }
+      };
+
+      fetchUserData();
+    }
+  }, [isAuthenticated, isLoading, updateUser]);
+
+  // Set initial image preview when user data loads
+  useEffect(() => {
+    if (user) {
+      const imageUrl = user.image || user.profilePicture;
+      if (imageUrl) {
+        if (imageUrl.startsWith('http')) {
+          setImagePreview(imageUrl);
+        } else if (imageUrl.startsWith('/uploads/')) {
+          setImagePreview(imageUrl);
+        } else if (imageUrl.includes('profiles/')) {
+          // Handle old Flutter app paths - convert to users path
+          setImagePreview(imageUrl.replace('profiles/', 'users/'));
+        } else {
+          setImagePreview(`/uploads/users/${imageUrl}`);
+        }
+      }
+    }
+  }, [user]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!imageFile || !user) return;
+
+    try {
+      setSaving(true);
+      setError('');
+
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      // Get token from cookies instead of localStorage
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+        return null;
+      };
+
+      const token = getCookie('auth_token');
+
+      const response = await fetch(`/api/auth/${user._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload profile picture');
+      }
+
+      const data = await response.json();
+      
+      // Update user data
+      if (updateUser) {
+        updateUser(data.user);
+      }
+
+      setSuccess('Profile picture updated successfully!');
+      setImageFile(null);
+      setIsEditing(false);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload profile picture');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getProfileImageUrl = () => {
+    if (imagePreview) return imagePreview;
+    const imageUrl = user?.image || user?.profilePicture;
+    if (!imageUrl) return '';
+    
+    // Handle different path formats
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Full URL
+    } else if (imageUrl.startsWith('/uploads/')) {
+      return imageUrl; // Server path
+    } else if (imageUrl.includes('profiles/')) {
+      // Handle old Flutter app paths - convert to users path
+      return imageUrl.replace('profiles/', 'users/');
+    } else {
+      return `/uploads/users/${imageUrl}`; // Assume it's a filename
+    }
+  };
 
   if (isLoading) {
     return (
@@ -49,14 +194,51 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-green-700">{success}</p>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-3 gap-6">
             {/* User Info Card */}
             <div className="md:col-span-1">
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="text-center">
-                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <User size={40} className="text-white" />
+                  {/* Profile Picture with Camera Icon */}
+                  <div className="relative inline-block mb-4">
+                    <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center overflow-hidden">
+                      {getProfileImageUrl() ? (
+                        <img 
+                          src={getProfileImageUrl()} 
+                          alt={`${user.firstName} ${user.lastName}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={40} className="text-white" />
+                      )}
+                    </div>
+                    {/* Camera Icon */}
+                    <button
+                      onClick={() => {
+                        if (!isEditing) setIsEditing(true);
+                        setTimeout(() => {
+                          document.getElementById('profile-image-input')?.click();
+                        }, 100);
+                      }}
+                      className="absolute bottom-0 right-0 w-6 h-6 bg-black rounded-full flex items-center justify-center text-white hover:bg-gray-800 transition shadow-lg"
+                      title="Change profile picture"
+                    >
+                      <Camera size={12} />
+                    </button>
                   </div>
+                  
                   <h2 className="text-xl font-semibold text-gray-900">
                     {user.firstName} {user.lastName}
                   </h2>
@@ -67,12 +249,85 @@ export default function ProfilePage() {
                       {user.role}
                     </span>
                   </div>
+                  
+                  {/* Edit Profile Button */}
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="mt-4 flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+                  >
+                    <Edit size={16} />
+                    <span>Edit Profile</span>
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Details Cards */}
             <div className="md:col-span-2 space-y-6">
+              {/* Profile Picture Upload Section */}
+              {isEditing && (
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h3>
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      id="profile-image-input"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    
+                    <div className="flex items-center space-x-6">
+                      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                        {imagePreview ? (
+                          <img 
+                            src={imagePreview} 
+                            alt="Profile preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User size={32} className="text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('profile-image-input')?.click()}
+                          className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition mb-2"
+                        >
+                          <Camera size={20} />
+                          <span>Choose Photo</span>
+                        </button>
+                        <p className="text-sm text-gray-500">
+                          JPG, PNG, GIF up to 5MB
+                        </p>
+                      </div>
+                    </div>
+
+                    {imageFile && (
+                      <div className="flex items-center space-x-4 pt-4 border-t">
+                        <button
+                          onClick={handleImageUpload}
+                          disabled={saving}
+                          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50"
+                        >
+                          {saving ? 'Uploading...' : 'Upload Photo'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(getProfileImageUrl());
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Personal Information */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>

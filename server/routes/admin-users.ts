@@ -47,9 +47,11 @@ router.post('/', authenticateToken, requireAdmin, uploadSingleUserImage, async (
       updatedAt: new Date(),
     };
 
-    // Add image path if uploaded
+    // Add image path if uploaded (update both fields for compatibility)
     if (req.file) {
-      newUser.image = `/uploads/users/${req.file.filename}`;
+      const imagePath = `/uploads/users/${req.file.filename}`;
+      newUser.image = imagePath;
+      newUser.profilePicture = imagePath;
     }
 
     const result = await usersCollection.insertOne(newUser);
@@ -156,9 +158,11 @@ router.put('/:id', authenticateToken, requireAdmin, uploadSingleUserImage, async
     if (role) updateData.role = role;
     if (status) updateData.status = status;
 
-    // Add image path if uploaded
+    // Add image path if uploaded (update both fields for compatibility)
     if (req.file) {
-      updateData.image = `/uploads/users/${req.file.filename}`;
+      const imagePath = `/uploads/users/${req.file.filename}`;
+      updateData.image = imagePath;
+      updateData.profilePicture = imagePath;
     }
 
     // Update user

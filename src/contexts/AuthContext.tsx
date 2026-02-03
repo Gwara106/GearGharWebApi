@@ -14,6 +14,8 @@ interface User {
   updatedAt: string;
   phone?: string;
   address?: string;
+  profilePicture?: string;
+  image?: string;
 }
 
 interface AuthContextType {

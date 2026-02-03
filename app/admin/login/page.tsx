@@ -52,12 +52,14 @@ export default function AdminLoginPage() {
       // Store token and redirect using auth context
       console.log('Calling login function with:', { token: result.token, user: result.user });
       login(result.token, result.user);
-      console.log('Admin login successful, redirecting...');
+      console.log('Admin login successful, checking cookies...');
       
-      // Use router instead of direct location change for better debugging
+      // Check if cookies were set
       setTimeout(() => {
+        console.log('Cookies after login:', document.cookie);
+        console.log('Redirecting to dashboard...');
         window.location.href = '/admin/dashboard';
-      }, 100);
+      }, 500);
     } catch (err) {
       console.error('Login error:', err);
       setError('An error occurred. Please try again.');

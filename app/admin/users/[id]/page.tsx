@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { User, ArrowLeft, Edit, Mail, Calendar, Shield, Activity } from 'lucide-react';
 
-interface UserData {
+interface UserDetail {
   _id: string;
   firstName: string;
   lastName: string;
@@ -15,6 +15,7 @@ interface UserData {
   createdAt: string;
   lastLogin?: string;
   image?: string;
+  profilePicture?: string;
 }
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
@@ -116,9 +117,9 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               <div className="bg-gradient-to-r from-primary to-primary/80 p-8">
                 <div className="flex items-center space-x-6">
                   <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-primary font-bold text-3xl">
-                    {userData.image ? (
+                    {userData.image || userData.profilePicture ? (
                       <img 
-                        src={userData.image} 
+                        src={userData.image || userData.profilePicture} 
                         alt={`${userData.firstName} ${userData.lastName}`}
                         className="w-full h-full rounded-full object-cover"
                       />

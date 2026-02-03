@@ -1,12 +1,14 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectToDatabase } from '../../lib/db';
+import { ObjectId } from 'mongodb';
 import { setTokenCookieServer, setUserCookieServer, clearAuthCookiesServer } from '../../lib/server-cookies';
 import { uploadSingleUserImage } from '../middleware/upload';
 
-const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+const router = express.Router();
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -52,7 +54,11 @@ router.post('/register', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: result.insertedId, email },
+      { 
+        userId: result.insertedId.toString(), 
+        email,
+        role: 'user'
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -118,7 +124,11 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { 
+        userId: user._id.toString(), 
+        email: user.email,
+        role: user.role 
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -323,9 +333,11 @@ router.put('/:id', uploadSingleUserImage, async (req, res) => {
       updateData.password = await bcrypt.hash(newPassword, saltRounds);
     }
 
-    // Add image path if uploaded
+    // Add image path if uploaded (update both fields for compatibility)
     if (req.file) {
-      updateData.image = `/uploads/users/${req.file.filename}`;
+      const imagePath = `/uploads/users/${req.file.filename}`;
+      updateData.image = imagePath;
+      updateData.profilePicture = imagePath;
     }
 
     // Update user

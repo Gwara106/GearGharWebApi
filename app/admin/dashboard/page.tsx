@@ -27,7 +27,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboardPage() {
-  const { user, isAuthenticated, isLoading, logout, token } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, token, updateUser } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +35,30 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (isAuthenticated() && token) {
       fetchDashboardData();
+      fetchUserData();
     }
   }, [isAuthenticated, token]);
+
+  const fetchUserData = async () => {
+    try {
+      if (!token) return;
+
+      const response = await fetch('/api/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user && updateUser) {
+          updateUser(data.user);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -92,9 +114,25 @@ export default function AdminDashboardPage() {
 
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-700">
-              Welcome, {user.firstName} {user.lastName}
-            </span>
+            {/* Profile Picture */}
+            <div className="flex items-center space-x-3">
+              {user?.profilePicture || user?.image ? (
+                <img
+                  src={user.profilePicture || user.image}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                  <span className="text-gray-600 font-semibold">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </span>
+                </div>
+              )}
+              <span className="text-sm text-gray-700">
+                Welcome, {user.firstName} {user.lastName}
+              </span>
+            </div>
             <button className="p-2 hover:bg-gray-100 rounded-lg transition">
               <Settings size={20} />
             </button>

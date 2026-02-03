@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/contexts/AuthContext';
-import { User, Mail, Calendar, Save, Upload, Lock, Edit } from 'lucide-react';
+import { User, Mail, Save, Lock, Edit, Camera } from 'lucide-react';
 
 interface UserProfile {
   _id: string;
@@ -15,6 +15,7 @@ interface UserProfile {
   createdAt: string;
   lastLogin?: string;
   image?: string;
+  profilePicture?: string;
 }
 
 export default function UserProfilePage() {
@@ -37,6 +38,22 @@ export default function UserProfilePage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  const getProfileImageUrl = (image?: string, profilePicture?: string) => {
+    const pic = image || profilePicture;
+    if (!pic) return '';
+    
+    // Handle different path formats
+    if (pic.startsWith('http')) {
+      return pic; // Full URL
+    } else if (pic.startsWith('/uploads/')) {
+      return pic; // Server path
+    } else if (pic === 'default-profile.png') {
+      return '/placeholder.svg'; // Use placeholder
+    } else {
+      return pic; // Assume it's a relative path
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated()) {
@@ -73,7 +90,7 @@ export default function UserProfilePage() {
         newPassword: '',
         confirmPassword: ''
       });
-      setImagePreview(data.user.image || '');
+      setImagePreview(getProfileImageUrl(data.user.image, data.user.profilePicture));
       setError('');
     } catch (err) {
       setError('Failed to fetch user profile');
@@ -192,7 +209,7 @@ export default function UserProfilePage() {
         newPassword: '',
         confirmPassword: ''
       });
-      setImagePreview(userData.image || '');
+      setImagePreview(getProfileImageUrl(userData.image, userData.profilePicture));
       setImageFile(null);
     }
     setIsEditing(false);
@@ -201,6 +218,7 @@ export default function UserProfilePage() {
   };
 
   if (isLoading || loading) {
+    console.log('Still loading...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -211,6 +229,7 @@ export default function UserProfilePage() {
     );
   }
 
+  
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container">
@@ -255,16 +274,43 @@ export default function UserProfilePage() {
               {/* Profile Header */}
               <div className="bg-gradient-to-r from-primary to-primary/80 p-8">
                 <div className="flex items-center space-x-6">
-                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-primary font-bold text-3xl overflow-hidden">
-                    {imagePreview ? (
-                      <img 
-                        src={imagePreview} 
-                        alt={`${userData.firstName} ${userData.lastName}`}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      `${userData.firstName[0]}${userData.lastName[0]}`
-                    )}
+                  <div className="relative">
+                    <div 
+                      className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-primary font-bold text-3xl overflow-hidden cursor-pointer hover:opacity-90 transition"
+                      onClick={() => {
+                        if (!isEditing) {
+                          setIsEditing(true);
+                        }
+                        setTimeout(() => {
+                          document.getElementById('profile-image-input')?.click();
+                        }, 100);
+                      }}
+                    >
+                      {imagePreview ? (
+                        <img 
+                          src={imagePreview} 
+                          alt={`${userData.firstName} ${userData.lastName}`}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        `${userData.firstName[0]}${userData.lastName[0]}`
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!isEditing) {
+                          setIsEditing(true);
+                        }
+                        setTimeout(() => {
+                          document.getElementById('profile-image-input')?.click();
+                        }, 100);
+                      }}
+                      className="absolute bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center text-white hover:bg-gray-800 transition shadow-lg"
+                      title="Change profile picture"
+                    >
+                      <Camera size={16} />
+                    </button>
                   </div>
                   <div className="text-white">
                     <h2 className="text-3xl font-bold">
@@ -277,6 +323,20 @@ export default function UserProfilePage() {
                     <p className="text-white/60 text-sm mt-1">
                       Member since {new Date(userData.createdAt).toLocaleDateString()}
                     </p>
+                    <div className="mt-3">
+                      <p className="text-white/70 text-sm">
+                        💡 Click on your profile picture or the camera icon to change it
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsEditing(true);
+                      }}
+                      className="mt-4 flex items-center space-x-2 px-6 py-2 bg-white text-primary rounded-lg hover:bg-gray-100 transition font-semibold"
+                    >
+                      <Edit size={20} />
+                      <span>Edit Profile</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -286,10 +346,7 @@ export default function UserProfilePage() {
                 <form onSubmit={handleSubmit} className="space-y-8">
                   {/* Profile Image */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <User size={20} className="mr-2 text-primary" />
-                      Profile Image
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h3>
                     <div className="flex items-center space-x-6">
                       <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                         {imagePreview ? (
@@ -304,27 +361,30 @@ export default function UserProfilePage() {
                           </span>
                         )}
                       </div>
-                      {isEditing && (
-                        <div>
-                          <input
-                            type="file"
-                            id="image"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            className="hidden"
-                          />
-                          <label
-                            htmlFor="image"
-                            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition cursor-pointer"
-                          >
-                            <Upload size={20} />
-                            <span>Change Image</span>
-                          </label>
-                          <p className="text-sm text-gray-500 mt-1">
-                            JPG, PNG, GIF up to 5MB
-                          </p>
-                        </div>
-                      )}
+                      <div>
+                        <input
+                          type="file"
+                          id="profile-image-input"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                        {isEditing && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById('profile-image-input')?.click()}
+                              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition mb-2"
+                            >
+                              <Camera size={20} />
+                              <span>Change Photo</span>
+                            </button>
+                            <p className="text-sm text-gray-500">
+                              JPG, PNG, GIF up to 5MB
+                            </p>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
 

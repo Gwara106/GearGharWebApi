@@ -224,6 +224,10 @@ function AuthProvider({ children }) {
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setTokenCookie"])(token);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setUserCookie"])(user);
     };
+    const updateUser = (updatedUser)=>{
+        setUser(updatedUser);
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setUserCookie"])(updatedUser);
+    };
     const logout = ()=>{
         setToken(null);
         setUser(null);
@@ -242,13 +246,14 @@ function AuthProvider({ children }) {
             isLoading,
             login,
             logout,
+            updateUser,
             isAdmin,
             isAuthenticated
         },
         children: children
     }, void 0, false, {
         fileName: "[project]/src/contexts/AuthContext.tsx",
-        lineNumber: 70,
+        lineNumber: 78,
         columnNumber: 5
     }, this);
 }
