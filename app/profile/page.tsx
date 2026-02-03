@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
       fetchUserData();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading]); // Removed updateUser from dependencies
 
   // Set initial image preview when user data loads
   useEffect(() => {

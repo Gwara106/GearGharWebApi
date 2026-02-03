@@ -10,39 +10,9 @@ export default function DashboardPage() {
   const { user, logout, isLoading, updateUser, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated() && !isLoading) {
-      const fetchUserData = async () => {
-        try {
-          const getCookie = (name: string) => {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop()?.split(';').shift();
-            return null;
-          };
-
-          const token = getCookie('auth_token');
-          if (!token) return;
-
-          const response = await fetch('/api/auth/profile', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.user && updateUser) {
-              updateUser(data.user);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch user data:', error);
-        }
-      };
-
-      fetchUserData();
-    }
-  }, [isAuthenticated, isLoading]);
+    // Dashboard doesn't need to fetch profile data - it can use auth context user data
+    // Keeping this disabled to prevent unnecessary API calls
+  }, []);
 
   const handleLogout = () => {
     logout();

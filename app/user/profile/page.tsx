@@ -65,10 +65,11 @@ export default function UserProfilePage() {
       return;
     }
 
-    if (isAuthenticated() && user && token) {
+    // Only fetch profile data if userData is not already set
+    if (isAuthenticated() && user && token && !userData) {
       fetchUserProfile();
     }
-  }, [isAuthenticated, isLoading, user, token, router]);
+  }, [isAuthenticated, isLoading, user, token, router, userData]);
 
   const fetchUserProfile = async () => {
     try {

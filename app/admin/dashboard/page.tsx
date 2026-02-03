@@ -33,9 +33,11 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Admin dashboard page useEffect triggered');
     if (isAuthenticated() && token) {
       fetchDashboardData();
-      fetchUserData();
+      // TEMPORARILY DISABLED TO DEBUG INFINITE CALLS
+      // fetchUserData();
     }
   }, [isAuthenticated, token]);
 
