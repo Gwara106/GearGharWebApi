@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/src/contexts/AuthContext';
 import { ArrowLeft, Check } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -12,6 +13,7 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
+  const { token } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -30,17 +32,69 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-      // Simulate order placement
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Get form data for shipping address
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      
+      const shippingAddress = {
+        firstName: formData.get('firstName') as string,
+        lastName: formData.get('lastName') as string,
+        address: formData.get('address') as string,
+        phone: formData.get('phone') as string
+      };
 
-      // In a real app, you would send the payment method to your backend
-      console.log('Order placed with payment method:', paymentMethod);
+      // Prepare order data
+      const orderData = {
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        shippingAddress,
+        paymentMethod,
+        subtotal: total,
+        tax,
+        shipping,
+        grandTotal
+      };
+
+      // Get token from auth context
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Place order via API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to place order');
+      }
+
+      const result = await response.json();
+      console.log('Order placed successfully:', result.order);
 
       // Clear cart and show success
       clearCart();
       setOrderPlaced(true);
+      
+      // Store order number for confirmation
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastOrderNumber', result.order.orderNumber);
+      }
+
     } catch (error) {
       console.error('Order placement error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to place order');
     } finally {
       setIsLoading(false);
     }
@@ -52,6 +106,11 @@ export default function CheckoutPage() {
 
   // Success Screen
   if (orderPlaced) {
+    // Get the stored order number
+    const orderNumber = typeof window !== 'undefined' 
+      ? localStorage.getItem('lastOrderNumber') || `ORD-${Math.random().toString().slice(2, 8)}`
+      : `ORD-${Math.random().toString().slice(2, 8)}`;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center max-w-md">
@@ -66,7 +125,7 @@ export default function CheckoutPage() {
 
           <div className="bg-gray-50 rounded-lg p-4 mb-8">
             <p className="text-sm text-gray-600 mb-1">Order Number</p>
-            <p className="text-2xl font-bold text-primary">ORD-{Math.random().toString().slice(2, 8)}</p>
+            <p className="text-2xl font-bold text-primary">{orderNumber}</p>
           </div>
 
           {/* Payment Method Confirmation */}
