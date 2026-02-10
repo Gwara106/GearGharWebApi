@@ -50,6 +50,13 @@ function CartProvider({ children }) {
             ];
         });
     };
+    const addToCart = (item)=>{
+        const cartItem = {
+            ...item,
+            quantity: item.quantity || 1
+        };
+        addItem(cartItem);
+    };
     const removeItem = (id)=>{
         setItems((prevItems)=>prevItems.filter((i)=>i.id !== id));
     };
@@ -75,13 +82,14 @@ function CartProvider({ children }) {
             removeItem,
             updateQuantity,
             clearCart,
+            addToCart,
             total,
             itemCount
         },
         children: children
     }, void 0, false, {
         fileName: "[project]/lib/cart-context.tsx",
-        lineNumber: 75,
+        lineNumber: 84,
         columnNumber: 5
     }, this);
 }

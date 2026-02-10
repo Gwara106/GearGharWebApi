@@ -7,6 +7,8 @@ import { handleDemo } from "./routes/demo";
 import { authRouter } from "./routes/auth";
 import { adminUsersRouter } from "./routes/admin-users";
 import { analyticsRouter } from "./routes/analytics";
+import { productsMockRouter } from "./routes/products-mock";
+import { reviewsMockRouter } from "./routes/reviews-mock";
 
 export function createServer() {
   const app = express();
@@ -42,6 +44,12 @@ export function createServer() {
 
   // Admin analytics routes
   app.use("/api/admin/analytics", analyticsRouter);
+
+  // Products routes
+  app.use("/api/products", productsMockRouter);
+
+  // Reviews routes
+  app.use("/api/reviews", reviewsMockRouter);
 
   return app;
 }
