@@ -6,6 +6,7 @@ import path from "path";
 import { handleDemo } from "./routes/demo";
 import { authRouter } from "./routes/auth";
 import { adminUsersRouter } from "./routes/admin-users";
+import { analyticsRouter } from "./routes/analytics";
 
 export function createServer() {
   const app = express();
@@ -38,6 +39,9 @@ export function createServer() {
 
   // Admin user management routes
   app.use("/api/admin/users", adminUsersRouter);
+
+  // Admin analytics routes
+  app.use("/api/admin/analytics", analyticsRouter);
 
   return app;
 }

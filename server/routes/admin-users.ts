@@ -72,22 +72,78 @@ router.post('/', authenticateToken, requireAdmin, uploadSingleUserImage, async (
   }
 });
 
-// GET /api/admin/users - Get all users (admin only)
+// GET /api/admin/users - Get all users with pagination (admin only)
 router.get('/', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const { db } = await connectToDatabase();
     const usersCollection = db.collection('users');
 
-    // Get all users without passwords
+    // Parse pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string || '';
+    const role = req.query.role as string;
+    const status = req.query.status as string;
+
+    // Validate pagination parameters
+    if (page < 1) {
+      return res.status(400).json({ 
+        message: 'Page must be greater than 0' 
+      });
+    }
+    if (limit < 1 || limit > 100) {
+      return res.status(400).json({ 
+        message: 'Limit must be between 1 and 100' 
+      });
+    }
+
+    // Build query filter
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (role) {
+      filter.role = role;
+    }
+    if (status) {
+      filter.status = status;
+    }
+
+    // Calculate skip value
+    const skip = (page - 1) * limit;
+
+    // Get total count
+    const total = await usersCollection.countDocuments(filter);
+
+    // Get users with pagination
     const users = await usersCollection
-      .find({})
+      .find(filter)
       .project({ password: 0 })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
 
     res.json({
       message: 'Users retrieved successfully',
-      users,
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext,
+        hasPrev
+      }
     });
   } catch (error) {
     console.error('Get users error:', error);

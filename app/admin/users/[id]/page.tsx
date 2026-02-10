@@ -22,7 +22,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
   
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

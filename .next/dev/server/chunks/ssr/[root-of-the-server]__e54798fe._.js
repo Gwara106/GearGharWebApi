@@ -201,27 +201,32 @@ function AuthProvider({ children }) {
         }
         setIsLoading(false);
     }, []);
-    const login = (token, user)=>{
+    const login = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((token, user)=>{
         setToken(token);
         setUser(user);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["setTokenCookie"])(token);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["setUserCookie"])(user);
-    };
-    const updateUser = (updatedUser)=>{
+    }, []);
+    const updateUser = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((updatedUser)=>{
         setUser(updatedUser);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["setUserCookie"])(updatedUser);
-    };
-    const logout = ()=>{
+    }, []);
+    const logout = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         setToken(null);
         setUser(null);
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["clearAuthCookies"])();
-    };
-    const isAdmin = ()=>{
+    }, []);
+    const isAdmin = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         return user?.role === 'admin';
-    };
-    const isAuthenticated = ()=>{
+    }, [
+        user
+    ]);
+    const isAuthenticated = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         return !!user && !!token;
-    };
+    }, [
+        user,
+        token
+    ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(AuthContext.Provider, {
         value: {
             user,

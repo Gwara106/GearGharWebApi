@@ -5,8 +5,11 @@ import { connectToDatabase } from '../../lib/db';
 import { ObjectId } from 'mongodb';
 import { setTokenCookieServer, setUserCookieServer, clearAuthCookiesServer } from '../../lib/server-cookies';
 import { uploadSingleUserImage } from '../middleware/upload';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const PASSWORD_RESET_SECRET = process.env.PASSWORD_RESET_SECRET || 'password-reset-secret-change-in-production';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const router = express.Router();
 
@@ -173,7 +176,7 @@ router.get('/profile', async (req, res) => {
     const usersCollection = db.collection('users');
 
     // Find user
-    const user = await usersCollection.findOne({ _id: decoded.userId });
+    const user = await usersCollection.findOne({ _id: new ObjectId(decoded.userId) });
     if (!user) {
       return res.status(404).json({ 
         message: 'User not found' 
@@ -222,7 +225,7 @@ router.put('/profile', async (req, res) => {
 
     // Update user
     const result = await usersCollection.updateOne(
-      { _id: decoded.userId },
+      { _id: new ObjectId(decoded.userId) },
       { 
         $set: { 
           firstName,
@@ -239,8 +242,8 @@ router.put('/profile', async (req, res) => {
     }
 
     // Get updated user
-    const updatedUser = await usersCollection.findOne({ _id: decoded.userId });
-    const { password: _, ...userWithoutPassword } = updatedUser;
+    const updatedUser = await usersCollection.findOne({ _id: new ObjectId(decoded.userId) });
+    const { password: _, ...userWithoutPassword } = updatedUser as any;
 
     res.json({
       message: 'Profile updated successfully',
@@ -296,7 +299,7 @@ router.put('/:id', uploadSingleUserImage, async (req, res) => {
     const usersCollection = db.collection('users');
 
     // Check if user exists
-    const user = await usersCollection.findOne({ _id: id });
+    const user = await usersCollection.findOne({ _id: new ObjectId(id) });
     if (!user) {
       return res.status(404).json({ 
         message: 'User not found' 
@@ -321,7 +324,7 @@ router.put('/:id', uploadSingleUserImage, async (req, res) => {
       }
 
       // Verify current password
-      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      const isValidPassword = await bcrypt.compare(currentPassword, (user as any).password);
       if (!isValidPassword) {
         return res.status(400).json({ 
           message: 'Current password is incorrect' 
@@ -342,13 +345,13 @@ router.put('/:id', uploadSingleUserImage, async (req, res) => {
 
     // Update user
     await usersCollection.updateOne(
-      { _id: id },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
 
     // Get updated user
-    const updatedUser = await usersCollection.findOne({ _id: id });
-    const { password: _, ...userWithoutPassword } = updatedUser;
+    const updatedUser = await usersCollection.findOne({ _id: new ObjectId(id) });
+    const { password: _, ...userWithoutPassword } = updatedUser as any;
 
     res.json({
       message: 'Profile updated successfully',
@@ -361,6 +364,186 @@ router.put('/:id', uploadSingleUserImage, async (req, res) => {
       });
     }
     console.error('Update profile error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+});
+
+// Forgot password - send reset email
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({ 
+        message: 'Email is required' 
+      });
+    }
+
+    // Connect to database
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
+    // Find user
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      // Don't reveal that user doesn't exist
+      return res.json({
+        message: 'If an account with that email exists, a password reset link has been sent.'
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+    // Set token expiration (15 minutes)
+    const resetTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+    // Save reset token to database
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { 
+        $set: {
+          resetToken: resetTokenHash,
+          resetTokenExpires
+        }
+      }
+    );
+
+    // In production, you would send an email here
+    // For now, we'll just log the reset link (in development)
+    const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+    console.log('Password reset link:', resetLink);
+
+    // TODO: Implement email sending
+    // Example email service integration:
+    // await sendPasswordResetEmail(email, resetLink);
+
+    res.json({
+      message: 'If an account with that email exists, a password reset link has been sent.',
+      // In development, return the token for testing
+      ...(process.env.NODE_ENV !== 'production' && { resetToken, resetLink })
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+});
+
+// Reset password - confirm with token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Validate input
+    if (!token || !newPassword) {
+      return res.status(400).json({ 
+        message: 'Token and new password are required' 
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        message: 'Password must be at least 6 characters long' 
+      });
+    }
+
+    // Hash the token to compare with stored hash
+    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Connect to database
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
+    // Find user with valid reset token
+    const user = await usersCollection.findOne({
+      resetToken: resetTokenHash,
+      resetTokenExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        message: 'Invalid or expired reset token' 
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password and clear reset token
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { 
+        $set: {
+          password: hashedPassword,
+          updatedAt: new Date()
+        },
+        $unset: {
+          resetToken: 1,
+          resetTokenExpires: 1
+        }
+      }
+    );
+
+    res.json({
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+});
+
+// Verify reset token
+router.post('/verify-reset-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ 
+        message: 'Token is required' 
+      });
+    }
+
+    // Hash the token to compare with stored hash
+    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Connect to database
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
+    // Find user with valid reset token
+    const user = await usersCollection.findOne({
+      resetToken: resetTokenHash,
+      resetTokenExpires: { $gt: new Date() }
+    },
+    { projection: { password: 0, resetToken: 0 } }
+    );
+
+    if (!user) {
+      return res.status(400).json({ 
+        message: 'Invalid or expired reset token' 
+      });
+    }
+
+    res.json({
+      message: 'Token is valid',
+      user: {
+        _id: user._id,
+        email: user.email,
+        firstName: user.firstName
+      }
+    });
+  } catch (error) {
+    console.error('Verify reset token error:', error);
     res.status(500).json({ 
       message: 'Internal server error' 
     });
