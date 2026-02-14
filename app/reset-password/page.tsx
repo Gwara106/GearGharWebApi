@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function ResetPassword() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
   
