@@ -10,11 +10,12 @@ interface Order {
   orderNumber: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   items: Array<{
-    id: string;
-    name: string;
-    price: number;
+    item: string;
     quantity: number;
-    image: string;
+    price: number;
+    totalPrice: number;
+    itemName: string;
+    itemImages: string[];
   }>;
   shippingAddress: {
     firstName: string;
@@ -71,7 +72,7 @@ export default function DashboardPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.orders);
+        setOrders(data.data); // Fixed: access data.data instead of data.orders
       } else {
         const errorData = await response.json();
         console.error('Failed to fetch orders:', errorData.message);
@@ -329,7 +330,7 @@ export default function DashboardPage() {
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <p className="text-gray-600 mt-4">Loading orders...</p>
                   </div>
-                ) : orders.length === 0 ? (
+                ) : !orders || !Array.isArray(orders) || orders.length === 0 ? (
                   <div className="text-center py-12">
                     <ShoppingBag size={48} className="mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600 mb-4">No orders yet</p>
@@ -339,7 +340,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {orders.map((order) => (
+                    {Array.isArray(orders) && orders.map((order) => (
                       <div key={order._id} className="border border-gray-200 rounded-lg p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -357,20 +358,18 @@ export default function DashboardPage() {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-900 mb-2">Items</h4>
                           <div className="space-y-2">
-                            {order.items.map((item, index) => (
+                            {order.items && Array.isArray(order.items) && order.items.map((item, index) => (
                               <div key={index} className="flex items-center gap-4">
                                 <img
-                                  src={item.image}
-                                  alt={item.name}
+                                  src={item.itemImages?.[0] || '/products/placeholder.png'}
+                                  alt={item.itemName || 'Product'}
                                   className="w-16 h-16 object-cover rounded-lg"
                                 />
                                 <div className="flex-1">
-                                  <p className="font-medium text-gray-900">{item.name}</p>
-                                  <p className="text-sm text-gray-600">Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
+                                  <p className="font-medium text-gray-900">{item.itemName || 'Product'}</p>
+                                  <p className="text-sm text-gray-600">Qty: {item.quantity} × Rs. {item.price.toFixed(2)}</p>
                                 </div>
-                                <p className="font-semibold text-gray-900">
-                                  ${(item.price * item.quantity).toFixed(2)}
-                                </p>
+                                <p className="font-semibold text-gray-900">Rs. {item.totalPrice.toFixed(2)}</p>
                               </div>
                             ))}
                           </div>

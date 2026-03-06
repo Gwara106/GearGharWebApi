@@ -167,10 +167,10 @@ export default function AdminDashboardPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {dashboardData && [
-            { label: 'Total Orders', value: dashboardData.totalOrders.toLocaleString(), change: `+${dashboardData.orderGrowthPercentage}%`, icon: ShoppingCart },
-            { label: 'Total Users', value: dashboardData.totalUsers.toLocaleString(), change: `+${dashboardData.userGrowthPercentage}%`, icon: Users },
-            { label: 'Total Products', value: dashboardData.totalProducts.toLocaleString(), change: `+${dashboardData.productGrowthPercentage}%`, icon: Package },
-            { label: 'Revenue', value: `$${dashboardData.totalRevenue.toLocaleString()}`, change: `+${dashboardData.revenueGrowthPercentage}%`, icon: BarChart3 },
+            { label: 'Total Orders', value: (dashboardData.totalOrders || 0).toLocaleString(), change: `+${dashboardData.orderGrowthPercentage || 0}%`, icon: ShoppingCart },
+            { label: 'Total Users', value: (dashboardData.totalUsers || 0).toLocaleString(), change: `+${dashboardData.userGrowthPercentage || 0}%`, icon: Users },
+            { label: 'Total Products', value: (dashboardData.totalProducts || 0).toLocaleString(), change: `+${dashboardData.productGrowthPercentage || 0}%`, icon: Package },
+            { label: 'Revenue', value: `Rs. ${(dashboardData.totalRevenue || 0).toLocaleString()}`, change: `+${dashboardData.revenueGrowthPercentage || 0}%`, icon: BarChart3 },
           ].map(({ label, value, change, icon: Icon }) => (
             <div
               key={label}
@@ -253,12 +253,12 @@ export default function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
+                    {dashboardData?.recentOrders && Array.isArray(dashboardData.recentOrders) && dashboardData.recentOrders.length > 0 ? (
                       dashboardData.recentOrders.map((order) => (
-                        <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                          <td className="py-4 px-4 font-semibold text-primary">{order.id}</td>
-                          <td className="py-4 px-4 text-gray-700">{order.customer}</td>
-                          <td className="py-4 px-4 font-semibold text-gray-900">{order.amount}</td>
+                        <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                          <td className="py-4 px-4 font-semibold text-primary">{order.orderNumber}</td>
+                          <td className="py-4 px-4 text-gray-700">{order.user?.name || 'Unknown'}</td>
+                          <td className="py-4 px-4 font-semibold text-gray-900">Rs. {(order.totalAmount || 0).toLocaleString()}</td>
                           <td className="py-4 px-4">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -272,7 +272,7 @@ export default function AdminDashboardPage() {
                               {order.status}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-gray-600 text-sm">{order.date}</td>
+                          <td className="py-4 px-4 text-gray-600 text-sm">{new Date(order.createdAt).toLocaleDateString()}</td>
                         </tr>
                       ))
                     ) : (

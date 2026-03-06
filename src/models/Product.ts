@@ -4,6 +4,8 @@ export interface IProduct extends Document {
   name: string;
   description: string;
   price: number;
+  currency: string;
+  originalPriceUSD?: number;
   category: string;
   brand: string;
   sku: string;
@@ -31,6 +33,16 @@ const ProductSchema: Schema = new Schema({
     type: Number,
     required: [true, 'Product price is required'],
     min: [0, 'Price cannot be negative']
+  },
+  currency: {
+    type: String,
+    required: [true, 'Currency is required'],
+    enum: ['INR', 'USD'],
+    default: 'INR'
+  },
+  originalPriceUSD: {
+    type: Number,
+    min: [0, 'Original price cannot be negative']
   },
   category: {
     type: String,
@@ -82,7 +94,7 @@ ProductSchema.index({ category: 1 });
 ProductSchema.index({ brand: 1 });
 ProductSchema.index({ status: 1 });
 ProductSchema.index({ price: 1 });
-ProductSchema.index({ sku: 1 });
+// Note: sku index is already defined as unique in the schema
 
 // Prevent model overwrite
 export const Product = mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);

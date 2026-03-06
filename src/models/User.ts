@@ -101,21 +101,19 @@ const UserSchema: Schema = new Schema({
 });
 
 // Pre-save middleware to handle backward compatibility
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function() {
   // Handle migration from old schema to new schema
   if (this.isNew && (this as any).name && !(this as any).firstName) {
     const nameParts = (this as any).name.split(' ');
     (this as any).firstName = nameParts[0] || (this as any).name;
     (this as any).lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
   }
-  next();
 });
 
 // Index for better query performance
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
-UserSchema.index({ email: 1 }, { unique: true });
-UserSchema.index({ username: 1 }, { unique: true, sparse: true });
+// Note: email and username indexes are already defined as unique in the schema
 
 // Prevent model overwrite
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

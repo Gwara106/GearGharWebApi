@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 15, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/ (unsupported edge import 'stream')"],"sourcesContent":["__turbopack_context__.n(__import_unsupported(`stream`));\n"],"names":[],"mappings":"AAAA,sBAAsB,CAAC,CAAC,qBAAqB,CAAC,MAAM,CAAC"}},
-    {"offset": {"line": 25, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/ (unsupported edge import 'crypto')"],"sourcesContent":["__turbopack_context__.n(__import_unsupported(`crypto`));\n"],"names":[],"mappings":"AAAA,sBAAsB,CAAC,CAAC,qBAAqB,CAAC,MAAM,CAAC"}}]
-}

@@ -83,7 +83,7 @@ export default function CartPage() {
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-900 mb-2">{item.name}</h3>
                         <p className="text-primary font-semibold mb-4">
-                          ${item.price.toFixed(2)}
+                          Rs. {item.price.toFixed(2)}
                         </p>
 
                         {/* Quantity Controls */}
@@ -113,7 +113,7 @@ export default function CartPage() {
                       {/* Price and Remove */}
                       <div className="text-right flex flex-col justify-between">
                         <p className="font-bold text-gray-900">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          Rs. {(item.price * item.quantity).toFixed(2)}
                         </p>
                         <button
                           onClick={() => removeItem(item.id)}

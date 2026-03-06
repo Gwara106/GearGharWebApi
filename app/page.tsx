@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import CategoryCard from '@/components/CategoryCard';
 import ProductCard from '@/components/ProductCard';
+import { useState, useEffect } from 'react';
 
 const categories = [
   {
@@ -48,54 +51,39 @@ const categories = [
   },
 ];
 
-const featuredProducts = [
-  {
-    id: 1,
-    name: 'Premium Safety Helmet - HD Vision',
-    category: 'Helmets',
-    price: 299.99,
-    originalPrice: 399.99,
-    image: '/products/helmet-1.png',
-    rating: 4.8,
-    reviews: 124,
-    inStock: true,
-  },
-  {
-    id: 2,
-    name: 'Sport Performance Gloves',
-    category: 'Gloves',
-    price: 89.99,
-    originalPrice: 129.99,
-    image: '/products/gloves.jpg',
-    rating: 4.6,
-    reviews: 87,
-    inStock: true,
-  },
-  {
-    id: 3,
-    name: 'High-Grip Handlebar Grips Set',
-    category: 'Handlebars',
-    price: 59.99,
-    originalPrice: 99.99,
-    image: '/products/450handlebar.png',
-    rating: 4.7,
-    reviews: 156,
-    inStock: true,
-  },
-  {
-    id: 4,
-    name: 'Premium Racing Tyres (Front)',
-    category: 'Tyres',
-    price: 199.99,
-    originalPrice: 299.99,
-    image: '/products/harleyDavidsontyres.jpg',
-    rating: 4.5,
-    reviews: 203,
-    inStock: true,
-  },
-];
-
 export default function Home() {
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await fetch('/api/products?limit=4');
+      if (response.ok) {
+        const products = await response.json();
+        // Transform database products to match frontend format
+        const transformedProducts = products.map((product: any) => ({
+          id: product._id,
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          originalPrice: product.originalPriceUSD ? product.originalPriceUSD * 83 : null,
+          image: product.images?.[0] || product.imageUrl?.replace('assets/Product_Image/', '/products/') || '/products/placeholder.png',
+          rating: 4.5 + Math.random() * 0.5, // Random rating for demo
+          reviews: Math.floor(Math.random() * 200) + 50, // Random reviews for demo
+          inStock: Boolean(product.status === 'active' && product.stock > 0),
+        }));
+        setFeaturedProducts(transformedProducts);
+      }
+    } catch (error) {
+      console.error('Error fetching featured products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -172,9 +160,20 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-gray-100 rounded-lg p-4 animate-pulse">
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                  <div className="bg-gray-200 h-4 rounded mb-2"></div>
+                  <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                </div>
+              ))
+            ) : (
+              featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
           </div>
         </div>
       </section>

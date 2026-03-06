@@ -193,7 +193,7 @@ export default function UserAnalyticsPage() {
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm mb-1">Total Users</p>
-                  <p className="text-3xl font-bold text-gray-900">{analytics.totalUsers.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900">{(analytics.totalUsers || 0).toLocaleString()}</p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
@@ -206,7 +206,7 @@ export default function UserAnalyticsPage() {
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm mb-1">Active Users</p>
-                  <p className="text-3xl font-bold text-gray-900">{analytics.activeUsers.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900">{(analytics.activeUsers || 0).toLocaleString()}</p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
@@ -219,7 +219,7 @@ export default function UserAnalyticsPage() {
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm mb-1">New This Month</p>
-                  <p className="text-3xl font-bold text-gray-900">{analytics.newUsersThisMonth.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900">{(analytics.newUsersThisMonth || 0).toLocaleString()}</p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">

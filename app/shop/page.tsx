@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { Filter, X } from 'lucide-react';
 
@@ -10,107 +10,17 @@ const categories = [
   'Handlebars',
   'Gloves',
   'Tyres',
-  'Exhaust Systems',
+  'Exhaust System',
   'Accessories',
+  'Clothing',
 ];
 
 const priceRanges = [
-  { label: 'Under $50', value: [0, 50] },
-  { label: '$50 - $100', value: [50, 100] },
-  { label: '$100 - $200', value: [100, 200] },
-  { label: '$200 - $500', value: [200, 500] },
-  { label: 'Over $500', value: [500, 10000] },
-];
-
-const allProducts = [
-  {
-    id: 1,
-    name: 'Premium Safety Helmet - HD Vision',
-    category: 'Helmets',
-    price: 299.99,
-    originalPrice: 399.99,
-    image: '/products/helmet-1.png',
-    rating: 4.8,
-    reviews: 124,
-    inStock: true,
-  },
-  {
-    id: 2,
-    name: 'Sport Performance Gloves',
-    category: 'Gloves',
-    price: 89.99,
-    originalPrice: 129.99,
-    image: '/products/gloves.jpg',
-    rating: 4.6,
-    reviews: 87,
-    inStock: true,
-  },
-  {
-    id: 3,
-    name: 'High-Grip Handlebar Grips Set',
-    category: 'Handlebars',
-    price: 59.99,
-    originalPrice: 99.99,
-    image: '/products/450handlebar.png',
-    rating: 4.7,
-    reviews: 156,
-    inStock: true,
-  },
-  {
-    id: 4,
-    name: 'Premium Racing Tyres (Front)',
-    category: 'Tyres',
-    price: 199.99,
-    originalPrice: 299.99,
-    image: '/products/harleyDavidsontyres.jpg',
-    rating: 4.5,
-    reviews: 203,
-    inStock: true,
-  },
-  {
-    id: 5,
-    name: 'Carbon Fiber Exhaust System',
-    category: 'Exhaust Systems',
-    price: 599.99,
-    originalPrice: 799.99,
-    image: '/products/exhaust1.png',
-    rating: 4.9,
-    reviews: 89,
-    inStock: true,
-  },
-  {
-    id: 6,
-    name: 'Professional Riding Suit',
-    category: 'Accessories',
-    price: 349.99,
-    originalPrice: 499.99,
-    image: '/products/jacket.jpg',
-    rating: 4.7,
-    reviews: 92,
-    inStock: true,
-  },
-  {
-    id: 7,
-    name: 'Full-Face Safety Helmet Pro',
-    category: 'Helmets',
-    price: 399.99,
-    originalPrice: 549.99,
-    image: '/products/helmet-1.png',
-    rating: 4.8,
-    reviews: 156,
-    inStock: true,
-  },
-  {
-    id: 8,
-    name: 'Leather Riding Gloves Premium',
-    category: 'Gloves',
-    price: 129.99,
-    originalPrice: 179.99,
-    image: '/products/gloves.jpg',
-    rating: 4.6,
-    reviews: 73,
-    inStock: false,
-  },
+  { label: 'Under Rs. 5000', value: [0, 5000] },
+  { label: 'Rs. 5000 - Rs. 10000', value: [5000, 10000] },
+  { label: 'Rs. 10000 - Rs. 20000', value: [10000, 20000] },
+  { label: 'Rs. 20000 - Rs. 50000', value: [20000, 50000] },
+  { label: 'Over Rs. 50000', value: [50000, 100000] },
 ];
 
 export default function ShopPage() {
@@ -118,6 +28,38 @@ export default function ShopPage() {
   const [selectedPriceRange, setSelectedPriceRange] = useState<[number, number] | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/products');
+      if (response.ok) {
+        const products = await response.json();
+        // Transform database products to match frontend format
+        const transformedProducts = products.map((product: any) => ({
+          id: product._id,
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          originalPrice: product.originalPriceUSD ? product.originalPriceUSD * 83 : null, // Convert back for display
+          image: product.images?.[0] || product.imageUrl?.replace('assets/Product_Image/', '/products/') || '/products/placeholder.png',
+          rating: 4.5 + Math.random() * 0.5, // Random rating for demo
+          reviews: Math.floor(Math.random() * 200) + 50, // Random reviews for demo
+          inStock: Boolean(product.status === 'active' && product.stock > 0),
+        }));
+        setAllProducts(transformedProducts);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProducts = allProducts.filter((product) => {
     const categoryMatch =
@@ -208,7 +150,7 @@ export default function ShopPage() {
                           type="radio"
                           name="price"
                           checked={
-                            selectedPriceRange &&
+                            selectedPriceRange != null &&
                             selectedPriceRange[0] === range.value[0] &&
                             selectedPriceRange[1] === range.value[1]
                           }
@@ -265,7 +207,17 @@ export default function ShopPage() {
             </div>
 
             {/* Products Grid */}
-            {sortedProducts.length > 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 animate-pulse">
+                    <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />

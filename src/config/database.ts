@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import { Order } from '../models/Order';
+import { User } from '../models/User';
+import { Product } from '../models/Product';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://luckyprajapati715_db_user:Gwara9841@ronakdemo.0yfckss.mongodb.net/gearghar';
 
@@ -22,8 +25,14 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   try {
+    console.log('Database: Connecting to MongoDB...');
+    console.log('Database: MongoDB URI:', process.env.MONGODB_URI);
+    
     cachedConnection = await mongoose.connect(MONGODB_URI, options);
     console.log('✅ Connected to MongoDB successfully');
+    
+    // Ensure all models are loaded
+    console.log('Database: Available models:', Object.keys(mongoose.models));
     
     // Handle connection events
     mongoose.connection.on('error', (error) => {
