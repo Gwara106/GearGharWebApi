@@ -8,12 +8,12 @@ import { ArrowLeft, Check } from 'lucide-react';
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
+  const { token, user } = useAuth();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
-  const { token } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -43,21 +43,42 @@ export default function CheckoutPage() {
         phone: formData.get('phone') as string
       };
 
-      // Prepare order data
+      // Prepare order data matching API expectations
       const orderData = {
+        user: user?._id || '6971697a28e563e31f971e49', // Use actual user ID or fallback
         items: items.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
+          itemId: item.id,
           quantity: item.quantity,
-          image: item.image
+          price: item.price,
+          totalPrice: item.price * item.quantity,
+          name: item.name,
+          images: [item.image]
         })),
-        shippingAddress,
-        paymentMethod,
+        shippingAddress: {
+          _id: user?._id || '1',
+          name: user ? `${user.firstName} ${user.lastName}` : `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          streetAddress: user?.address || shippingAddress.address,
+          city: 'Kathmandu', // Default city since User interface doesn't have city
+          phone: user?.phone || shippingAddress.phone,
+          isDefault: true
+        },
+        billingAddress: {
+          _id: user?._id || '1',
+          name: user ? `${user.firstName} ${user.lastName}` : `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          streetAddress: user?.address || shippingAddress.address,
+          city: 'Kathmandu', // Default city since User interface doesn't have city
+          phone: user?.phone || shippingAddress.phone,
+          isDefault: true
+        },
+        paymentMethodId: paymentMethod === 'cash-on-delivery' ? 'cash' : 'card',
         subtotal: total,
         tax,
         shipping,
-        grandTotal
+        discount: 0,
+        total: grandTotal, // Complete total
+        customerNotes: 'Order placed from web app',
+        isGift: false,
+        paymentStatus: 'pending'
       };
 
       // Get token from auth context
@@ -81,7 +102,7 @@ export default function CheckoutPage() {
       }
 
       const result = await response.json();
-      console.log('Order placed successfully:', result.order);
+      console.log('Order placed successfully:', result.data);
 
       // Clear cart and show success
       clearCart();
@@ -89,7 +110,7 @@ export default function CheckoutPage() {
       
       // Store order number for confirmation
       if (typeof window !== 'undefined') {
-        localStorage.setItem('lastOrderNumber', result.order.orderNumber);
+        localStorage.setItem('lastOrderNumber', result.data.orderNumber);
       }
 
     } catch (error) {
@@ -460,7 +481,7 @@ export default function CheckoutPage() {
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
                     <p className="font-semibold text-gray-900">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      Rs. {(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -470,15 +491,15 @@ export default function CheckoutPage() {
               <div className="space-y-4 pb-6 border-b border-gray-200">
                 <div className="flex justify-between text-gray-700">
                   <span>Subtotal</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>Rs. {total.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>Rs. {tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span>Shipping</span>
-                  <span>${shipping.toFixed(2)}</span>
+                  <span>Rs. {shipping.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span>Payment Method</span>
@@ -492,7 +513,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between items-center mt-6">
                 <span className="text-lg font-bold text-gray-900">Total</span>
                 <span className="text-2xl font-bold text-primary">
-                  ${grandTotal.toFixed(2)}
+                  Rs. {grandTotal.toFixed(2)}
                 </span>
               </div>
             </div>

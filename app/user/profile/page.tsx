@@ -202,8 +202,7 @@ export default function UserProfilePage() {
       console.error(err);
     } finally {
       setSaving(false);
-    }
-  };
+    };
 
   const handleCancel = () => {
     if (user) {
@@ -550,4 +549,5 @@ export default function UserProfilePage() {
       </div>
     </div>
   );
+}
 }

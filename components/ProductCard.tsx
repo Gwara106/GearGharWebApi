@@ -6,11 +6,11 @@ import { Star, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 interface Product {
-  id: number;
+  id: string; // Changed from number to string to support MongoDB ObjectId
   name: string;
   category: string;
   price: number;
-  originalPrice: number;
+  originalPrice: number | null;
   image: string;
   rating: number;
   reviews: number;
@@ -20,9 +20,9 @@ interface Product {
 export default function ProductCard({ product }: { product: Product }) {
   const [isAdded, setIsAdded] = useState(false);
 
-  const discount = Math.round(
+  const discount = product.originalPrice ? Math.round(
     ((product.originalPrice - product.price) / product.originalPrice) * 100
-  );
+  ) : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -78,11 +78,11 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-gray-900">
-              ${product.price.toFixed(2)}
+              Rs. {product.price.toFixed(2)}
             </span>
-            {product.originalPrice > product.price && (
+            {product.originalPrice && product.originalPrice > product.price && (
               <span className="text-sm text-gray-500 line-through">
-                ${product.originalPrice.toFixed(2)}
+                Rs. {product.originalPrice.toFixed(2)}
               </span>
             )}
           </div>
