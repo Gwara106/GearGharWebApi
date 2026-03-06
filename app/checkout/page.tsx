@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/src/contexts/AuthContext';
 import { ArrowLeft, Check } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -11,6 +12,8 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('credit-card');
+  const { token } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -29,14 +32,69 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-      // Simulate order placement
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Get form data for shipping address
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      
+      const shippingAddress = {
+        firstName: formData.get('firstName') as string,
+        lastName: formData.get('lastName') as string,
+        address: formData.get('address') as string,
+        phone: formData.get('phone') as string
+      };
+
+      // Prepare order data
+      const orderData = {
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        shippingAddress,
+        paymentMethod,
+        subtotal: total,
+        tax,
+        shipping,
+        grandTotal
+      };
+
+      // Get token from auth context
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Place order via API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to place order');
+      }
+
+      const result = await response.json();
+      console.log('Order placed successfully:', result.order);
 
       // Clear cart and show success
       clearCart();
       setOrderPlaced(true);
+      
+      // Store order number for confirmation
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastOrderNumber', result.order.orderNumber);
+      }
+
     } catch (error) {
       console.error('Order placement error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to place order');
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +106,11 @@ export default function CheckoutPage() {
 
   // Success Screen
   if (orderPlaced) {
+    // Get the stored order number
+    const orderNumber = typeof window !== 'undefined' 
+      ? localStorage.getItem('lastOrderNumber') || `ORD-${Math.random().toString().slice(2, 8)}`
+      : `ORD-${Math.random().toString().slice(2, 8)}`;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center max-w-md">
@@ -62,7 +125,20 @@ export default function CheckoutPage() {
 
           <div className="bg-gray-50 rounded-lg p-4 mb-8">
             <p className="text-sm text-gray-600 mb-1">Order Number</p>
-            <p className="text-2xl font-bold text-primary">ORD-{Math.random().toString().slice(2, 8)}</p>
+            <p className="text-2xl font-bold text-primary">{orderNumber}</p>
+          </div>
+
+          {/* Payment Method Confirmation */}
+          <div className="bg-blue-50 rounded-lg p-4 mb-8">
+            <p className="text-sm text-blue-600 mb-1">Payment Method</p>
+            <p className="font-semibold text-blue-900">
+              {paymentMethod === 'credit-card' ? 'Credit/Debit Card' : 'Cash on Delivery'}
+            </p>
+            {paymentMethod === 'cash-on-delivery' && (
+              <p className="text-sm text-blue-800 mt-2">
+                Please have the exact amount ready when your order arrives.
+              </p>
+            )}
           </div>
 
           <p className="text-gray-600 mb-6">
@@ -232,65 +308,100 @@ export default function CheckoutPage() {
                       type="radio"
                       name="payment"
                       value="credit-card"
-                      defaultChecked
+                      checked={paymentMethod === 'credit-card'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-4 h-4"
                     />
                     <span className="ml-3 font-semibold">Credit/Debit Card</span>
                   </label>
 
-                  <div className="space-y-4 p-4 border border-gray-300 rounded-lg">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
-                        Card Number
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        maxLength={19}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
-                      />
-                    </div>
+                  {/* Card Details Form - Only show when credit card is selected */}
+                  {paymentMethod === 'credit-card' && (
+                    <div className="space-y-4 p-4 border border-gray-300 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">
+                          Card Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="1234 5678 9012 3456"
+                          maxLength={19}
+                          required={paymentMethod === 'credit-card'}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
-                          MM/YY
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="12/25"
-                          maxLength={5}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
-                          CVC
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="123"
-                          maxLength={3}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
-                          ZIP Code
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="10001"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
-                        />
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-2">
+                            MM/YY <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="12/25"
+                            maxLength={5}
+                            required={paymentMethod === 'credit-card'}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-2">
+                            CVC <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="123"
+                            maxLength={3}
+                            required={paymentMethod === 'credit-card'}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-2">
+                            ZIP Code <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="10001"
+                            required={paymentMethod === 'credit-card'}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer">
-                    <input type="radio" name="payment" value="paypal" className="w-4 h-4" />
-                    <span className="ml-3 font-semibold">PayPal</span>
+                  <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors">
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="cash-on-delivery"
+                      checked={paymentMethod === 'cash-on-delivery'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-4 h-4" 
+                    />
+                    <span className="ml-3 font-semibold">Cash on Delivery</span>
                   </label>
+
+                  {/* Cash on Delivery Info */}
+                  {paymentMethod === 'cash-on-delivery' && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 text-blue-600 mt-0.5">
+                          <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-900 mb-1">Cash on Delivery</h4>
+                          <p className="text-sm text-blue-800">
+                            Pay with cash when your order arrives. Please have the exact amount ready.
+                            Our delivery partner will provide you with a receipt upon payment.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -368,6 +479,12 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-gray-700">
                   <span>Shipping</span>
                   <span>${shipping.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-700">
+                  <span>Payment Method</span>
+                  <span className="font-medium">
+                    {paymentMethod === 'credit-card' ? 'Credit/Debit Card' : 'Cash on Delivery'}
+                  </span>
                 </div>
               </div>
 

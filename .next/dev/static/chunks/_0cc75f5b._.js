@@ -50,6 +50,13 @@ function CartProvider({ children }) {
             ];
         });
     };
+    const addToCart = (item)=>{
+        const cartItem = {
+            ...item,
+            quantity: item.quantity || 1
+        };
+        addItem(cartItem);
+    };
     const removeItem = (id)=>{
         setItems((prevItems)=>prevItems.filter((i)=>i.id !== id));
     };
@@ -75,13 +82,14 @@ function CartProvider({ children }) {
             removeItem,
             updateQuantity,
             clearCart,
+            addToCart,
             total,
             itemCount
         },
         children: children
     }, void 0, false, {
         fileName: "[project]/lib/cart-context.tsx",
-        lineNumber: 75,
+        lineNumber: 84,
         columnNumber: 5
     }, this);
 }
@@ -218,27 +226,42 @@ function AuthProvider({ children }) {
             setIsLoading(false);
         }
     }["AuthProvider.useEffect"], []);
-    const login = (token, user)=>{
-        setToken(token);
-        setUser(user);
-        (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setTokenCookie"])(token);
-        (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setUserCookie"])(user);
-    };
-    const updateUser = (updatedUser)=>{
-        setUser(updatedUser);
-        (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setUserCookie"])(updatedUser);
-    };
-    const logout = ()=>{
-        setToken(null);
-        setUser(null);
-        (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["clearAuthCookies"])();
-    };
-    const isAdmin = ()=>{
-        return user?.role === 'admin';
-    };
-    const isAuthenticated = ()=>{
-        return !!user && !!token;
-    };
+    const login = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "AuthProvider.useCallback[login]": (token, user)=>{
+            setToken(token);
+            setUser(user);
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setTokenCookie"])(token);
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setUserCookie"])(user);
+        }
+    }["AuthProvider.useCallback[login]"], []);
+    const updateUser = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "AuthProvider.useCallback[updateUser]": (updatedUser)=>{
+            setUser(updatedUser);
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setUserCookie"])(updatedUser);
+        }
+    }["AuthProvider.useCallback[updateUser]"], []);
+    const logout = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "AuthProvider.useCallback[logout]": ()=>{
+            setToken(null);
+            setUser(null);
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$cookies$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["clearAuthCookies"])();
+        }
+    }["AuthProvider.useCallback[logout]"], []);
+    const isAdmin = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "AuthProvider.useCallback[isAdmin]": ()=>{
+            return user?.role === 'admin';
+        }
+    }["AuthProvider.useCallback[isAdmin]"], [
+        user
+    ]);
+    const isAuthenticated = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "AuthProvider.useCallback[isAuthenticated]": ()=>{
+            return !!user && !!token;
+        }
+    }["AuthProvider.useCallback[isAuthenticated]"], [
+        user,
+        token
+    ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(AuthContext.Provider, {
         value: {
             user,
@@ -257,7 +280,7 @@ function AuthProvider({ children }) {
         columnNumber: 5
     }, this);
 }
-_s(AuthProvider, "mX4/AXRUN66G8j/NKXHYWKblzjI=");
+_s(AuthProvider, "B9FxQKDxnoXkB38X/VK3uQu5zNs=");
 _c = AuthProvider;
 function useAuth() {
     _s1();

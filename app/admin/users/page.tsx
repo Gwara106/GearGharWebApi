@@ -20,7 +20,9 @@ interface Pagination {
   page: number;
   limit: number;
   total: number;
-  pages: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 export default function ManageUsersPage() {
@@ -28,7 +30,7 @@ export default function ManageUsersPage() {
   const router = useRouter();
   
   const [users, setUsers] = useState<User[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -71,7 +73,7 @@ export default function ManageUsersPage() {
       }
 
       const data = await response.json();
-      setUsers(data.users);
+      setUsers(data.data);
       setPagination(data.pagination);
       setError('');
     } catch (err) {
@@ -93,16 +95,13 @@ export default function ManageUsersPage() {
 
   const handleUpdate = async (updatedUser: Partial<User>) => {
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(`/api/admin/users/${editingUser?._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          userId: editingUser?._id,
-          ...updatedUser
-        })
+        body: JSON.stringify(updatedUser)
       });
 
       if (!response.ok) {
@@ -119,12 +118,12 @@ export default function ManageUsersPage() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/users?userId=${userId}`, {
+      const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -326,7 +325,7 @@ export default function ManageUsersPage() {
             </div>
 
             {/* Pagination */}
-            {pagination.pages > 1 && (
+            {pagination.totalPages > 1 && (
               <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-700">
@@ -337,17 +336,17 @@ export default function ManageUsersPage() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => fetchUsers(pagination.page - 1)}
-                      disabled={pagination.page === 1}
+                      disabled={!pagination.hasPrev}
                       className="p-2 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <ChevronLeft size={16} />
                     </button>
                     <span className="px-3 py-1 text-sm font-medium text-gray-700">
-                      {pagination.page} of {pagination.pages}
+                      {pagination.page} of {pagination.totalPages}
                     </span>
                     <button
                       onClick={() => fetchUsers(pagination.page + 1)}
-                      disabled={pagination.page === pagination.pages}
+                      disabled={!pagination.hasNext}
                       className="p-2 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <ChevronRight size={16} />
