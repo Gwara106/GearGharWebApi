@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, ShoppingCart, Minus, Plus, Truck, Shield, RefreshCw, Heart } from 'lucide-react';
+import { useCart } from '@/lib/cart-context';
 
 interface Product {
   _id: string;
@@ -27,6 +28,7 @@ interface Product {
 
 export default function ProductPage() {
   const params = useParams();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,10 @@ export default function ProductPage() {
       
       const data = await response.json();
       console.log('Product data from API:', data);
+      console.log('Product images:', data.images);
+      console.log('Selected image index:', selectedImage);
+      console.log('Image path for selected image:', data.images?.[selectedImage]);
+      console.log('Processed image src:', getImageSrc(data.images?.[selectedImage] || ''));
       setProduct(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load product');
@@ -72,7 +78,15 @@ export default function ProductPage() {
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 3000);
     
-    // TODO: Implement actual cart functionality
+    // Use cart context to add item
+    addToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0] || '/placeholder.svg',
+      quantity: quantity
+    });
+    
     console.log('Added to cart:', product.name, 'Quantity:', quantity);
   };
 
@@ -116,8 +130,8 @@ export default function ProductPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
           <p className="text-gray-600">{error}</p>
-          <Link href="/" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
-            Return to Home
+          <Link href="/shop" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+            Return to Shop
           </Link>
         </div>
       </div>
@@ -129,8 +143,8 @@ export default function ProductPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Product Not Found</h1>
-          <Link href="/" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
-            Return to Home
+          <Link href="/shop" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+            Return to Shop
           </Link>
         </div>
       </div>
@@ -140,28 +154,13 @@ export default function ProductPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
-        <nav className="flex mb-8" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-2">
-            <li>
-              <Link href="/" className="text-gray-500 hover:text-gray-700">
-                Home
-              </Link>
-            </li>
-            <li>
-              <span className="text-gray-500">/</span>
-            </li>
-            <li>
-              <Link href="/products" className="text-gray-500 hover:text-gray-700">
-                Products
-              </Link>
-            </li>
-            <li>
-              <span className="text-gray-500">/</span>
-            </li>
-            <li className="text-gray-900 font-medium">{product.name}</li>
-          </ol>
-        </nav>
+        {/* Back Button */}
+        <Link 
+          href="/shop" 
+          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
+        >
+          ← Back to Shop
+        </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
@@ -173,6 +172,7 @@ export default function ProductPage() {
                 width={600}
                 height={600}
                 className="w-full h-full object-cover object-center"
+                loading="eager"
               />
             </div>
             {product.images && product.images.length > 0 && (
@@ -220,10 +220,10 @@ export default function ProductPage() {
 
             <div className="space-y-2">
               <div className="flex items-baseline space-x-2">
-                <span className="text-3xl font-bold text-gray-900">${product.price}</span>
+                <span className="text-3xl font-bold text-gray-900">Rs. {product.price}</span>
                 {product.originalPriceUSD && (
                   <span className="text-lg text-gray-500 line-through">
-                    ${product.originalPriceUSD}
+                    Rs. {Math.round(product.originalPriceUSD * 83)}
                   </span>
                 )}
               </div>

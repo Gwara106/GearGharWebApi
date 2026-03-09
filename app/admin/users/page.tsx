@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Search, Filter, Edit, Trash2, Users, Shield, Mail, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -39,18 +39,7 @@ export default function ManageUsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated() || user?.role !== 'admin')) {
-      router.push('/admin/login');
-      return;
-    }
-
-    if (isAuthenticated() && user?.role === 'admin' && token) {
-      fetchUsers();
-    }
-  }, [isAuthenticated, isLoading, user, token, router]);
-
-  const fetchUsers = async (page = 1) => {
+  const fetchUsers = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       
@@ -73,8 +62,13 @@ export default function ManageUsersPage() {
       }
 
       const data = await response.json();
-      setUsers(data.data);
-      setPagination(data.pagination);
+      console.log('Full API Response:', data);
+      console.log('Users data:', data.users);
+      console.log('Users data length:', data.users?.length);
+      console.log('Setting users state...');
+      setUsers(data.users || []);
+      console.log('Users state set');
+      setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
       setError('');
     } catch (err) {
       setError('Failed to fetch users');
@@ -82,7 +76,18 @@ export default function ManageUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, search, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated() || user?.role !== 'admin')) {
+      router.push('/admin/login');
+      return;
+    }
+
+    if (isAuthenticated() && user?.role === 'admin' && token) {
+      fetchUsers();
+    }
+  }, [isAuthenticated, isLoading, user, token, router, fetchUsers]);
 
   const handleSearch = () => {
     fetchUsers(1);
@@ -252,7 +257,7 @@ export default function ManageUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
+                  {users && users.length > 0 ? users.map((user) => (
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -319,7 +324,13 @@ export default function ManageUsersPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        No users found
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

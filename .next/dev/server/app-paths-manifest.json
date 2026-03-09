@@ -1,10 +1,11 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/products/[id]/route": "app/api/products/[id]/route.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/orders/page": "app/admin/orders/page.js",
+  "/api/admin/dashboard/route": "app/api/admin/dashboard/route.js",
+  "/api/admin/orders/[id]/status/route": "app/api/admin/orders/[id]/status/route.js",
+  "/api/admin/orders/dashboard/stats/route": "app/api/admin/orders/dashboard/stats/route.js",
+  "/api/admin/orders/route": "app/api/admin/orders/route.js",
   "/api/products/route": "app/api/products/route.js",
-  "/login/page": "app/login/page.js",
   "/page": "app/page.js",
-  "/product/[id]/page": "app/product/[id]/page.js",
-  "/register/page": "app/register/page.js",
-  "/shop/page": "app/shop/page.js"
+  "/profile/page": "app/profile/page.js"
 }

@@ -120,6 +120,8 @@ router.get('/', authenticateToken, requireAdmin, async (req: AuthenticatedReques
     const total = await usersCollection.countDocuments(filter);
 
     // Get users with pagination
+    console.log('Filter:', filter);
+    console.log('Skip:', skip, 'Limit:', limit);
     const users = await usersCollection
       .find(filter)
       .project({ password: 0 })
@@ -127,6 +129,9 @@ router.get('/', authenticateToken, requireAdmin, async (req: AuthenticatedReques
       .skip(skip)
       .limit(limit)
       .toArray();
+
+    console.log('Users found:', users.length);
+    console.log('Users data:', users);
 
     // Calculate pagination info
     const totalPages = Math.ceil(total / limit);

@@ -3,4 +3,7 @@
     chunks: [
   "static/chunks/app_globals_71f961d1.css",
   "static/chunks/node_modules_2ba32e32._.js",
-  "static/chunks
+  "static/chunks/_0cc75f5b._.js"
+],
+    source: "dynamic"
+});

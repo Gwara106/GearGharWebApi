@@ -23,7 +23,6 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$api$2f$server$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/api/server.js [middleware-edge] (ecmascript) <locals>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/server/web/exports/index.js [middleware-edge] (ecmascript)");
 ;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 // Simple JWT verification for middleware (without external libraries)
 function verifyJWT(token) {
     try {
@@ -45,7 +44,6 @@ function verifyJWT(token) {
 }
 function middleware(request) {
     const { pathname } = request.nextUrl;
-    console.log('Middleware checking path:', pathname);
     // Define protected routes (exclude login page)
     const adminRoutes = [
         '/admin/dashboard',
@@ -61,47 +59,31 @@ function middleware(request) {
     const isAdminRoute = adminRoutes.some((route)=>pathname.startsWith(route));
     const isUserRoute = userRoutes.some((route)=>pathname.startsWith(route));
     const isPublicRoute = publicRoutes.some((route)=>pathname.startsWith(route));
-    console.log('Route checks:', {
-        isAdminRoute,
-        isUserRoute,
-        isPublicRoute
-    });
     // If it's a public route or not a protected route, continue
     if (isPublicRoute || !isAdminRoute && !isUserRoute) {
-        console.log('Allowing access to public/non-protected route');
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
     }
     // Get token from cookies
     const token = request.cookies.get('auth_token')?.value;
-    console.log('Token found in cookies:', !!token);
     // If no token, redirect to login
     if (!token) {
-        console.log('No token found, redirecting to login');
         const loginUrl = isAdminRoute ? '/admin/login' : '/admin/login';
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL(loginUrl, request.url));
     }
     // Verify token (simple verification without crypto)
     const decoded = verifyJWT(token);
     if (!decoded) {
-        console.log('Token verification failed, redirecting to login');
         const loginUrl = isAdminRoute ? '/admin/login' : '/admin/login';
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL(loginUrl, request.url));
     }
-    console.log('Token decoded successfully:', {
-        userId: decoded.userId,
-        role: decoded.role
-    });
     // For admin routes, check if user has admin role
     if (isAdminRoute && decoded.role !== 'admin') {
-        console.log('Admin route access denied - role is not admin:', decoded.role);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/admin/login', request.url));
     }
     // For user routes, check if user is authenticated
     if (isUserRoute && !decoded.userId) {
-        console.log('User route access denied - no userId');
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/admin/login', request.url));
     }
-    console.log('Access granted to protected route');
     // Add user info to headers for the server components
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', decoded.userId);
@@ -116,14 +98,16 @@ function middleware(request) {
 const config = {
     matcher: [
         /*
-     * Match all request paths except for the ones starting with:
+     * Match only specific routes that need protection
+     * Exclude:
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - public folder (static assets)
      * - admin/login (login page)
-     */ '/((?!api|_next/static|_next/image|favicon.ico|public|admin/login).*)'
+     */ '/admin/:path*',
+        '/user/:path*'
     ]
 };
 }),

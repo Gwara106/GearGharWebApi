@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://luckyprajapati715_db_user:Gwara9841@ronakdemo.0yfckss.mongodb.net/gearghar';
+import { connectToDatabase } from '@/src/config/database';
 
 export async function GET(request: NextRequest) {
   try {
-    // Connect to database
-    await mongoose.connect(MONGODB_URI);
+    // Connect to database using centralized connection
+    await connectToDatabase();
     
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database not connected');
-    }
+    // Get product model
+    const { Product } = await import('@/src/models/Product');
     
-    const productsCollection = db.collection('products');
-    const products = await productsCollection.find({}).toArray();
-    
-    await mongoose.disconnect();
+    const products = await Product.find({}).lean();
     
     return NextResponse.json(products);
   } catch (error) {
@@ -36,18 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
     
-    // Connect to database
-    await mongoose.connect(MONGODB_URI);
+    // Connect to database using centralized connection
+    await connectToDatabase();
     
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database not connected');
-    }
+    // Get product model
+    const { Product } = await import('@/src/models/Product');
     
-    const productsCollection = db.collection('products');
-    
-    // Create new product
-    const newProduct = {
+    // Create new product using mongoose model
+    const newProduct = new Product({
       name,
       category,
       price: parseFloat(price),
@@ -60,16 +48,12 @@ export async function POST(request: NextRequest) {
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    };
+    });
     
-    const result = await productsCollection.insertOne(newProduct);
+    // Save product to database
+    const savedProduct = await newProduct.save();
     
-    await mongoose.disconnect();
-    
-    return NextResponse.json({
-      ...newProduct,
-      _id: result.insertedId
-    }, { status: 201 });
+    return NextResponse.json(savedProduct.toJSON(), { status: 201 });
   } catch (error) {
     console.error('Create product error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
