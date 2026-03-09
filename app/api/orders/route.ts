@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://luckyprajapati715_db_user:Gwara9841@ronakdemo.0yfckss.mongodb.net/gearghar';
+import { connectToDatabase } from '@/src/config/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,22 +32,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Connect to database
-    await mongoose.connect(MONGODB_URI);
+    // Connect to database using centralized connection
+    await connectToDatabase();
     console.log('Orders API: Connected to database');
     
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database not connected');
-    }
-
-    const ordersCollection = db.collection('orders');
+    // Get order model
+    const { Order } = await import('@/src/models/Order');
 
     // Generate unique order number
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
     
-    // Create new order matching Flutter app structure
-    const newOrder = {
+    // Create new order using mongoose model
+    const newOrder = new Order({
       orderNumber,
       user: user, // User ID from Flutter app
       items: items.map((item: any) => ({
@@ -94,23 +87,18 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString(),
           note: 'Order placed via web app'
         }
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      ]
+    });
 
-    // Insert order into database
-    const result = await ordersCollection.insertOne(newOrder);
+    // Save order to database
+    const savedOrder = await newOrder.save();
     
     // Don't disconnect - let mongoose manage connection pool
 
     return NextResponse.json({
       success: true,
       message: 'Order created successfully',
-      data: {
-        ...newOrder,
-        _id: result.insertedId.toString()
-      }
+      data: savedOrder.toJSON()
     });
 
   } catch (error: any) {
@@ -125,21 +113,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Connect to database
-    await mongoose.connect(MONGODB_URI);
+    // Connect to database using centralized connection
+    await connectToDatabase();
     console.log('Orders API: Connected to database');
     
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database not connected');
-    }
-
-    const ordersCollection = db.collection('orders');
+    // Get order model
+    const { Order } = await import('@/src/models/Order');
     
     // Get all orders, sorted by creation date (newest first)
-    const orders = await ordersCollection.find({})
+    const orders = await Order.find({})
       .sort({ createdAt: -1 })
-      .toArray();
+      .lean();
 
     // Don't disconnect - let mongoose manage connection pool
 

@@ -19,7 +19,7 @@ export default function CartPage() {
   useEffect(() => {
     const itemsTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const taxAmount = itemsTotal * 0.1; // 10% tax
-    const shippingCost = itemsTotal > 100 ? 0 : 9.99; // Free shipping over $100
+    const shippingCost = itemsTotal > 8300 ? 0 : 500; // Free shipping over Rs. 8,300, otherwise Rs. 500
 
     setTotal(itemsTotal);
     setTax(taxAmount);
@@ -162,18 +162,18 @@ export default function CartPage() {
                 <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
                   <div className="flex justify-between text-gray-700">
                     <span>Subtotal</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Rs. {total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-700">
                     <span>Tax (10%)</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>Rs. {tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-700">
                     <span>
                       Shipping
                       {shipping === 0 && <span className="text-green-600 text-sm ml-2">(Free)</span>}
                     </span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>Rs. {shipping.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -181,7 +181,7 @@ export default function CartPage() {
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-lg font-bold text-gray-900">Grand Total</span>
                   <span className="text-2xl font-bold text-primary">
-                    ${grandTotal.toFixed(2)}
+                    Rs. {grandTotal.toFixed(2)}
                   </span>
                 </div>
 
@@ -197,7 +197,7 @@ export default function CartPage() {
                 {/* Info */}
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    ✓ Free shipping on orders over $100
+                    ✓ Free shipping on orders over Rs. 8,300
                   </p>
                   <p className="text-sm text-blue-700 mt-2">
                     ✓ Secure checkout with SSL encryption

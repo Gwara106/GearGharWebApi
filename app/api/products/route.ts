@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://luckyprajapati715_db_user:Gwara9841@ronakdemo.0yfckss.mongodb.net/gearghar';
+import { connectToDatabase } from '@/src/config/database';
 
 export async function GET(request: NextRequest) {
   try {
-    // Connect to database
-    await mongoose.connect(MONGODB_URI);
+    // Connect to database using centralized connection
+    await connectToDatabase();
     
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -15,33 +12,31 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const search = searchParams.get('search');
     
-    // Get products from database
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database not connected');
-    }
-    const productsCollection = db.collection('products');
-    let filteredProducts = await productsCollection.find({ status: 'active' }).toArray();
+    // Get products from database using mongoose model
+    const { Product } = await import('@/src/models/Product');
+    
+    let query: any = { status: 'active' };
     
     if (category && category !== 'All Products') {
-      filteredProducts = filteredProducts.filter(p => p.category === category);
+      query.category = category;
     }
     
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredProducts = filteredProducts.filter(p => 
-        p.name.toLowerCase().includes(searchLower) ||
-        p.description.toLowerCase().includes(searchLower) ||
-        p.brand.toLowerCase().includes(searchLower)
-      );
+      query.$or = [
+        { name: { $regex: searchLower, $options: 'i' } },
+        { description: { $regex: searchLower, $options: 'i' } },
+        { brand: { $regex: searchLower, $options: 'i' } }
+      ];
     }
 
     const skip = (page - 1) * limit;
-    const paginatedProducts = filteredProducts.slice(skip, skip + limit);
+    const products = await Product.find(query)
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    await mongoose.disconnect();
-
-    return NextResponse.json(paginatedProducts);
+    return NextResponse.json(products);
   } catch (error) {
     console.error('Get products error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
