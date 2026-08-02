@@ -2,10 +2,27 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['images.unsplash.com', 'motorcycle-parts-images.s3.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'motorcycle-parts-images.s3.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  },
+  // Suppress middleware deprecation warning - middleware is still the correct approach for authentication
+  experimental: {
+    middlewarePrefetch: undefined,
   },
 };
 

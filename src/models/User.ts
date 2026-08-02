@@ -1,5 +1,31 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+/**
+ * A motorcycle the rider owns. Persisted so the assistant never has to ask for
+ * the bike twice, and so maintenance intervals can be computed against a real
+ * odometer reading.
+ */
+export interface IGarageEntry {
+  motorcycle: mongoose.Types.ObjectId;
+  motorcycleSlug: string;
+  motorcycleLabel: string;
+  nickname?: string;
+  year?: number;
+  odometerKm?: number;
+  odometerUpdatedAt?: Date;
+  lastServiceAt?: Date;
+  lastServiceKm?: number;
+  isPrimary: boolean;
+  addedAt: Date;
+}
+
+export interface IUserPreferences {
+  beginnerMode: boolean;
+  ridingStyle?: 'commute' | 'touring' | 'track' | 'offroad' | 'casual';
+  budgetBand?: 'budget' | 'mid' | 'premium';
+  preferredBrands: string[];
+}
+
 export interface IUser extends Document {
   firstName: string;
   lastName: string;
@@ -11,10 +37,30 @@ export interface IUser extends Document {
   profilePicture?: string; // Mobile app field
   role: 'user' | 'admin';
   status: 'active' | 'inactive';
+  /** Rider's motorcycles — powers persistent assistant memory + personalisation. */
+  garage: IGarageEntry[];
+  preferences: IUserPreferences;
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const GarageEntrySchema = new Schema<IGarageEntry>(
+  {
+    motorcycle: { type: Schema.Types.ObjectId, ref: 'Motorcycle', required: true },
+    motorcycleSlug: { type: String, required: true, trim: true },
+    motorcycleLabel: { type: String, required: true, trim: true },
+    nickname: { type: String, trim: true, maxlength: 40 },
+    year: { type: Number, min: 1950, max: 2100 },
+    odometerKm: { type: Number, min: 0 },
+    odometerUpdatedAt: { type: Date },
+    lastServiceAt: { type: Date },
+    lastServiceKm: { type: Number, min: 0 },
+    isPrimary: { type: Boolean, default: false },
+    addedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 
 const UserSchema: Schema = new Schema({
   firstName: {
@@ -83,6 +129,22 @@ const UserSchema: Schema = new Schema({
     },
     default: 'active'
   },
+  garage: {
+    type: [GarageEntrySchema],
+    default: []
+  },
+  preferences: {
+    beginnerMode: { type: Boolean, default: false },
+    ridingStyle: {
+      type: String,
+      enum: ['commute', 'touring', 'track', 'offroad', 'casual'],
+    },
+    budgetBand: {
+      type: String,
+      enum: ['budget', 'mid', 'premium'],
+    },
+    preferredBrands: { type: [String], default: [] }
+  },
   lastLogin: {
     type: Date,
     default: null
@@ -113,6 +175,9 @@ UserSchema.pre('save', async function() {
 // Index for better query performance
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
+// Assistant memory lookups: "which bike does this user ride?"
+UserSchema.index({ 'garage.motorcycle': 1 });
+UserSchema.index({ 'garage.motorcycleSlug': 1 });
 // Note: email and username indexes are already defined as unique in the schema
 
 // Prevent model overwrite

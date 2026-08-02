@@ -1,7 +1,4 @@
 import mongoose from 'mongoose';
-import { Order } from '../models/Order';
-import { User } from '../models/User';
-import { Product } from '../models/Product';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://luckyprajapati715_db_user:Gwara9841@ronakdemo.0yfckss.mongodb.net/gearghar';
 
@@ -12,8 +9,11 @@ if (!MONGODB_URI) {
 // Connection options (updated for MongoDB 7.0+)
 const options = {
   maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
   socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  connectTimeoutMS: 10000, // Time to establish connection
+  retryWrites: true, // Retry failed writes
+  retryReads: true, // Retry failed reads
 };
 
 // Cached connection
@@ -26,8 +26,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 
   try {
     console.log('Database: Connecting to MongoDB...');
-    console.log('Database: MongoDB URI:', process.env.MONGODB_URI);
-    
+
     cachedConnection = await mongoose.connect(MONGODB_URI, options);
     console.log('✅ Connected to MongoDB successfully');
     

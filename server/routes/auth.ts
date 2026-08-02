@@ -413,10 +413,10 @@ router.post('/forgot-password', async (req, res) => {
       }
     );
 
-    // In production, you would send an email here
-    // For now, we'll just log the reset link (in development)
+    // In production, you would send an email here.
+    // The reset link contains a sensitive token, so it is NOT logged.
     const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
-    console.log('Password reset link:', resetLink);
+    console.log('Password reset requested; reset link generated.');
 
     // TODO: Implement email sending
     // Example email service integration:

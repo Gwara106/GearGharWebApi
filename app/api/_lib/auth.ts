@@ -11,8 +11,6 @@ export interface AuthenticatedUser {
 
 export async function authenticateToken(request: NextRequest): Promise<{ success: boolean; user?: AuthenticatedUser; message?: string }> {
   try {
-    console.log('Auth: MongoDB URI:', process.env.MONGODB_URI);
-    
     // Get token from cookie or header
     const token = request.cookies.get('auth_token')?.value || 
                   request.headers.get('authorization')?.replace('Bearer ', '');

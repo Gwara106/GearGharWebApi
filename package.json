@@ -10,7 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:chatbot": "vitest run tests/chatbot",
+    "eval:chatbot": "vitest run tests/chatbot/evaluation.test.ts --reporter=verbose",
+    "seed:knowledge": "node -r dotenv/config scripts/seed-knowledge.js",
+    "seed:motorcycles": "node -r dotenv/config scripts/seed-motorcycles.js",
+    "backfill:ratings": "node -r dotenv/config scripts/backfill-product-ratings.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -41,7 +46,7 @@
     "mongodb": "^6.3.0",
     "mongoose": "^9.1.1",
     "multer": "^2.0.2",
-    "next": "^16.1.6",
+    "next": "^15.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.71.1",

@@ -76,8 +76,6 @@ export default function AdminOrdersPage() {
         return;
       }
 
-      console.log('Fetching orders with token:', token.substring(0, 20) + '...');
-      
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
@@ -116,8 +114,6 @@ export default function AdminOrdersPage() {
         return;
       }
 
-      console.log('Fetching stats with token:', token.substring(0, 20) + '...');
-      
       const response = await fetch('/api/admin/orders/dashboard/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -143,8 +139,7 @@ export default function AdminOrdersPage() {
       setUpdatingStatus(true);
       
       console.log('Updating order status:', { orderId, newStatus, note });
-      console.log('Token being used:', token ? `${token.substring(0, 20)}...` : 'No token');
-      
+
       const response = await fetch(`/api/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ChatWidget from '@/components/chat/ChatWidget';
 import { CartProvider } from '@/lib/cart-context';
 import { AuthProvider } from '@/src/contexts/AuthContext';
 
@@ -26,6 +27,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <ChatWidget />
           </CartProvider>
         </AuthProvider>
       </body>

@@ -21,10 +21,6 @@ export async function PUT(
     const token = request.cookies.get('auth_token')?.value || 
                   request.headers.get('authorization')?.replace('Bearer ', '');
 
-    console.log('Token from cookies:', request.cookies.get('auth_token')?.value);
-    console.log('Token from headers:', request.headers.get('authorization')?.replace('Bearer ', ''));
-    console.log('Final token:', token);
-
     if (!token) {
       console.log('No token provided');
       return NextResponse.json({ message: 'No token provided' }, { status: 401 });
@@ -32,8 +28,7 @@ export async function PUT(
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
-    console.log('Decoded token:', decoded);
-    
+
     // Users can only update their own profile
     if (decoded.userId !== id) {
       console.log('User ID mismatch:', decoded.userId, 'vs', id);

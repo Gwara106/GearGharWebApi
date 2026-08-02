@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BarChart3, Users, Package, ShoppingCart, LogOut, Settings, Plus } from 'lucide-react';
+import { BarChart3, Users, Package, ShoppingCart, LogOut, Settings, Plus, Bike } from 'lucide-react';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 
@@ -226,6 +226,13 @@ export default function AdminDashboardPage() {
                 >
                   <Package size={20} />
                   <span>Manage Products</span>
+                </Link>
+                <Link
+                  href="/admin/motorcycles"
+                  className="flex items-center space-x-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold"
+                >
+                  <Bike size={20} />
+                  <span>Bike Compatibility</span>
                 </Link>
               </div>
             </div>

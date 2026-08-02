@@ -50,7 +50,6 @@ export default function AdminLoginPage() {
       }
 
       // Store token and redirect using auth context
-      console.log('Calling login function with:', { token: result.token, user: result.user });
       login(result.token, result.user);
       console.log('Admin login successful, checking cookies...');
       

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -m 60 -X POST http://localhost:3000/api/chat -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('motorcycle:',d['meta']['motorcycle']\\); print\\('remembered:',d['meta']['motorcycleRemembered']\\); print\\('categories:',d['meta']['categories']\\); print\\('products:',[\\(p['name'],p.get\\('compatible'\\)\\) for p in d['products']]\\)\")",
+      "Bash(curl -s -o /dev/null -w \"GET /api/admin/motorcycles -> %{http_code}\\\\n\" http://localhost:3000/api/admin/motorcycles)",
+      "Bash(curl -s http://localhost:3000/api/admin/motorcycles -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('created slug:',d.get\\('slug'\\),'id:',d.get\\('_id'\\)\\)\")",
+      "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('count:',len\\(d\\)\\);print\\([\\(m['product']['name'] if m['product'] else None, m['universal']\\) for m in d]\\)\")",
+      "Bash(curl -s -m 60 -X POST http://localhost:3000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"accessories for my Apache RTR 160\",\"sessionId\":\"apache-test\"}')",
+      "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\)['data'];print\\('interactions:',d['totalInteractions']\\);print\\('topModels:',[\\(m['model'],m['count']\\) for m in d['mostSearchedModels'][:3]]\\);print\\('topCategories:',[\\(c['category'],c['count']\\) for c in d['mostRequestedCategories'][:3]]\\);print\\('intents:',[\\(i['intent'],i['count']\\) for i in d['intentBreakdown']]\\)\")",
+      "Bash(node -r dotenv/config scripts/normalize-products.js)",
+      "Bash(curl -s -m 60 -X POST http://localhost:3000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"exhaust for Yamaha R15 V4\",\"sessionId\":\"warmup\"}' -o /dev/null -w \"warmup http %{http_code}\\\\n\")",
+      "Bash(node -r dotenv/config scripts/diagnose-gemini.js)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
