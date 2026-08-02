@@ -34,6 +34,8 @@ export interface IUser extends Document {
   username?: string; // Mobile app field
   password: string;
   phoneNumber?: string; // Mobile app field
+  /** Postal address shown and edited on the profile page. */
+  address?: string;
   profilePicture?: string; // Mobile app field
   role: 'user' | 'admin';
   status: 'active' | 'inactive';
