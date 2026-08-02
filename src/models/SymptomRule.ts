@@ -31,6 +31,8 @@ export interface ISymptomRule extends Document {
   /** When true the reply MUST carry a mechanic-escalation clause (server-enforced). */
   escalateToMechanic: boolean;
   safetyCritical: boolean;
+  /** Set on machine-type specialisations derived from a curated base rule. */
+  derivedFrom?: string;
   source: {
     title: string;
     url?: string;
@@ -65,6 +67,7 @@ const SymptomRuleSchema: Schema = new Schema(
     likelyCauses: { type: [LikelyCauseSchema], default: [] },
     escalateToMechanic: { type: Boolean, default: false },
     safetyCritical: { type: Boolean, default: false },
+    derivedFrom: { type: String, trim: true },
     source: {
       title: { type: String, required: true, trim: true },
       url: { type: String, trim: true },
@@ -80,6 +83,7 @@ const SymptomRuleSchema: Schema = new Schema(
 
 SymptomRuleSchema.index({ aliases: 1 });
 SymptomRuleSchema.index({ safetyCritical: 1 });
+SymptomRuleSchema.index({ derivedFrom: 1 });
 SymptomRuleSchema.index({ 'appliesTo.types': 1 });
 SymptomRuleSchema.index(
   { title: 'text', aliases: 'text' },

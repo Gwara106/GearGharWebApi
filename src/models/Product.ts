@@ -185,6 +185,26 @@ const ProductSchema: Schema = new Schema({
   timestamps: true
 });
 
+ProductSchema.pre('validate', async function () {
+  const doc = this as any;
+
+  if (doc.sku === undefined || doc.sku === null || String(doc.sku).trim() === '') {
+    const token = (value: unknown, max: number): string =>
+      String(value || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, max)
+        .replace(/-$/, '');
+
+    const idPart = String(doc._id || '').slice(-6).toUpperCase() || 'UNKNOWN';
+    const catPart = token(doc.partCategory || doc.category || 'MISC', 6);
+    const namePart = token(doc.name, 14);
+
+    doc.sku = ['LEG', catPart, namePart, idPart].filter(Boolean).join('-');
+  }
+});
+
 // Indexes for better query performance
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ partCategory: 1 });

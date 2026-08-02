@@ -36,6 +36,12 @@ export interface IMaintenanceTask extends Document {
   relatedPartCategories: string[];
   safetyCritical: boolean;
   source: IMaintenanceSource;
+  /**
+   * Set on machine-type specialisations derived from a curated base document.
+   * Absent on hand-authored documents. Kept so knowledge-coverage counts can
+   * report authored and derived totals separately.
+   */
+  derivedFrom?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,9 +83,12 @@ const MaintenanceTaskSchema: Schema = new Schema(
     relatedPartCategories: { type: [String], default: [] },
     safetyCritical: { type: Boolean, default: false },
     source: { type: SourceSchema, required: true },
+    derivedFrom: { type: String, trim: true },
   },
   { timestamps: true }
 );
+
+MaintenanceTaskSchema.index({ derivedFrom: 1 });
 
 MaintenanceTaskSchema.index({ 'appliesTo.types': 1 });
 MaintenanceTaskSchema.index({ 'appliesTo.motorcycleSlugs': 1 });

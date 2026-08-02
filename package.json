@@ -15,7 +15,13 @@
     "eval:chatbot": "vitest run tests/chatbot/evaluation.test.ts --reporter=verbose",
     "seed:knowledge": "node -r dotenv/config scripts/seed-knowledge.js",
     "seed:motorcycles": "node -r dotenv/config scripts/seed-motorcycles.js",
-    "backfill:ratings": "node -r dotenv/config scripts/backfill-product-ratings.js"
+    "seed:catalog": "node -r dotenv/config scripts/seed-catalog.js",
+    "seed:catalog:fresh": "node -r dotenv/config scripts/seed-catalog.js --fresh",
+    "seed:all": "npm run backfill:skus && npm run seed:catalog && npm run seed:knowledge && npm run normalize:catalog -- --apply && npm run backfill:ratings",
+    "normalize:catalog": "node -r dotenv/config scripts/normalize-catalog.js",
+    "backfill:skus": "node -r dotenv/config scripts/backfill-product-skus.js",
+    "backfill:ratings": "node -r dotenv/config scripts/backfill-product-ratings.js",
+    "test:catalog": "vitest run tests/catalog"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

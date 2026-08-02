@@ -40,6 +40,8 @@ export interface IUser extends Document {
   /** Rider's motorcycles — powers persistent assistant memory + personalisation. */
   garage: IGarageEntry[];
   preferences: IUserPreferences;
+  /** Most-recent-first product ids, capped server-side. Drives "recently viewed". */
+  recentlyViewed: mongoose.Types.ObjectId[];
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -144,6 +146,10 @@ const UserSchema: Schema = new Schema({
       enum: ['budget', 'mid', 'premium'],
     },
     preferredBrands: { type: [String], default: [] }
+  },
+  recentlyViewed: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
+    default: []
   },
   lastLogin: {
     type: Date,

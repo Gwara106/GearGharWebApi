@@ -13,8 +13,16 @@
  * Verify afterwards with: node -r dotenv/config scripts/verify-knowledge.js
  */
 const { MongoClient } = require('mongodb');
-const { MAINTENANCE_TASKS, SYMPTOM_RULES, PART_GLOSSARY, EDITORIAL } = require('./data/knowledge');
+const { EDITORIAL } = require('./data/knowledge');
+const { buildKnowledge } = require('./data/knowledge-extended');
 const { TAXONOMY } = require('./data/taxonomy');
+const { ensureIndexes } = require('./data/indexes');
+
+// Curated base documents plus their machine-type specialisations.
+const KNOWLEDGE = buildKnowledge();
+const MAINTENANCE_TASKS = KNOWLEDGE.maintenance;
+const SYMPTOM_RULES = KNOWLEDGE.symptoms;
+const PART_GLOSSARY = KNOWLEDGE.glossary;
 
 async function upsertAll(collection, docs, key) {
   let inserted = 0;
@@ -96,65 +104,76 @@ async function run() {
     // ── Indexes required by the retrieval + evaluation layers ───────────────
     console.log('\nCreating indexes...');
 
-    await maintenance.createIndex({ taskKey: 1 }, { unique: true });
-    await maintenance.createIndex({ 'appliesTo.types': 1 });
-    await maintenance.createIndex({ 'appliesTo.motorcycleSlugs': 1 });
-    await maintenance.createIndex({ relatedPartCategories: 1 });
-    await maintenance.createIndex({ safetyCritical: 1 });
-    await maintenance.createIndex(
-      { title: 'text', summary: 'text', warningSigns: 'text' },
-      { weights: { title: 10, summary: 4, warningSigns: 2 }, name: 'maintenance_text' }
+    // Every index goes through ensureIndex, which reconciles with whatever is
+    // already present. Collections predating a schema change often carry the
+    // same key pattern with different options — chatconversations.sessionId was
+    // indexed non-uniquely by an earlier schema and is declared unique now —
+    // and a bare createIndex aborts the seed with IndexKeySpecsConflict (86)
+    // after the documents have already been written.
+    await ensureIndexes(
+      [
+        { collection: maintenance, keys: { taskKey: 1 }, options: { unique: true } },
+        { collection: maintenance, keys: { 'appliesTo.types': 1 } },
+        { collection: maintenance, keys: { 'appliesTo.motorcycleSlugs': 1 } },
+        { collection: maintenance, keys: { relatedPartCategories: 1 } },
+        { collection: maintenance, keys: { safetyCritical: 1 } },
+        { collection: maintenance, keys: { derivedFrom: 1 } },
+        {
+          collection: maintenance,
+          keys: { title: 'text', summary: 'text', warningSigns: 'text' },
+          options: { weights: { title: 10, summary: 4, warningSigns: 2 }, name: 'maintenance_text' },
+        },
+
+        { collection: symptoms, keys: { symptomKey: 1 }, options: { unique: true } },
+        { collection: symptoms, keys: { aliases: 1 } },
+        { collection: symptoms, keys: { safetyCritical: 1 } },
+        { collection: symptoms, keys: { 'appliesTo.types': 1 } },
+        { collection: symptoms, keys: { derivedFrom: 1 } },
+        {
+          collection: symptoms,
+          keys: { title: 'text', aliases: 'text' },
+          options: { weights: { title: 10, aliases: 6 }, name: 'symptom_text' },
+        },
+
+        { collection: glossary, keys: { partCategory: 1 }, options: { unique: true } },
+        { collection: glossary, keys: { relatedCategories: 1 } },
+        {
+          collection: glossary,
+          keys: { title: 'text', whatItIs: 'text', whyUpgrade: 'text' },
+          options: { weights: { title: 10, whatItIs: 4, whyUpgrade: 2 }, name: 'glossary_text' },
+        },
+
+        {
+          collection: products,
+          keys: { name: 'text', tags: 'text', description: 'text' },
+          options: { weights: { name: 10, tags: 5, description: 1 }, name: 'product_text' },
+        },
+        { collection: products, keys: { status: 1, partCategory: 1, price: 1 } },
+        { collection: products, keys: { ratingAvg: -1 } },
+
+        { collection: db.collection('chatconversations'), keys: { sessionId: 1 }, options: { unique: true } },
+        { collection: db.collection('chatconversations'), keys: { 'messages.turnId': 1 } },
+        { collection: db.collection('chatfeedbacks'), keys: { turnId: 1 }, options: { unique: true } },
+        { collection: db.collection('groundingviolations'), keys: { violationType: 1, createdAt: -1 } },
+        { collection: db.collection('chatanalyticsevents'), keys: { createdAt: -1, intent: 1 } },
+        { collection: db.collection('users'), keys: { 'garage.motorcycleSlug': 1 } },
+      ],
+      { log: console.log }
     );
-
-    await symptoms.createIndex({ symptomKey: 1 }, { unique: true });
-    await symptoms.createIndex({ aliases: 1 });
-    await symptoms.createIndex({ safetyCritical: 1 });
-    await symptoms.createIndex({ 'appliesTo.types': 1 });
-    await symptoms.createIndex(
-      { title: 'text', aliases: 'text' },
-      { weights: { title: 10, aliases: 6 }, name: 'symptom_text' }
-    );
-
-    await glossary.createIndex({ partCategory: 1 }, { unique: true });
-    await glossary.createIndex({ relatedCategories: 1 });
-    await glossary.createIndex(
-      { title: 'text', whatItIs: 'text', whyUpgrade: 'text' },
-      { weights: { title: 10, whatItIs: 4, whyUpgrade: 2 }, name: 'glossary_text' }
-    );
-
-    // Product text index — replaces the unindexed $regex scan in retrieval.
-    try {
-      await products.createIndex(
-        { name: 'text', tags: 'text', description: 'text' },
-        { weights: { name: 10, tags: 5, description: 1 }, name: 'product_text' }
-      );
-      console.log('✅ products.product_text index ready');
-    } catch (err) {
-      // A collection may only have one text index; report clearly rather than fail.
-      console.warn(`⚠️  Product text index: ${err.message}`);
-      console.warn('    If an older text index exists, drop it and re-run:');
-      console.warn('    db.products.dropIndex("<old_index_name>")');
-    }
-
-    await products.createIndex({ status: 1, partCategory: 1, price: 1 });
-    await products.createIndex({ ratingAvg: -1 });
-
-    await db.collection('chatconversations').createIndex({ sessionId: 1 }, { unique: true });
-    await db.collection('chatconversations').createIndex({ 'messages.turnId': 1 });
-    await db.collection('chatfeedbacks').createIndex({ turnId: 1 }, { unique: true });
-    await db.collection('groundingviolations').createIndex({ violationType: 1, createdAt: -1 });
-    await db.collection('chatanalyticsevents').createIndex({ createdAt: -1, intent: 1 });
-    await db.collection('users').createIndex({ 'garage.motorcycleSlug': 1 });
-
-    console.log('✅ Indexes created');
 
     // ── Coverage report ─────────────────────────────────────────────────────
     const covered = new Set(PART_GLOSSARY.map((g) => g.partCategory));
     const missing = Object.keys(TAXONOMY).filter((c) => !covered.has(c));
 
     console.log('\n── Knowledge base coverage ──');
-    console.log(`Maintenance tasks : ${await maintenance.countDocuments()}`);
-    console.log(`Symptom rules     : ${await symptoms.countDocuments()}`);
+    console.log(
+      `Maintenance tasks : ${await maintenance.countDocuments()} ` +
+        `(${KNOWLEDGE.counts.maintenanceBase} authored + ${KNOWLEDGE.counts.maintenanceDerived} type-specialised)`
+    );
+    console.log(
+      `Symptom rules     : ${await symptoms.countDocuments()} ` +
+        `(${KNOWLEDGE.counts.symptomsBase} authored + ${KNOWLEDGE.counts.symptomsDerived} type-specialised)`
+    );
     console.log(`Glossary entries  : ${await glossary.countDocuments()} / ${Object.keys(TAXONOMY).length} taxonomy slugs`);
     if (missing.length > 0) {
       console.log(`Glossary gaps     : ${missing.join(', ')}`);
