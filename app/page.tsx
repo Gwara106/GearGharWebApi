@@ -63,7 +63,10 @@ export default function Home() {
     try {
       const response = await fetch('/api/products?limit=4');
       if (response.ok) {
-        const products = await response.json();
+        const payload = await response.json();
+        // /api/products returns { products, total, page, ... }; the bare-array
+        // shape is only served with ?format=legacy. Accept either.
+        const products = Array.isArray(payload) ? payload : (payload?.products ?? []);
         // Transform database products to match frontend format
         const transformedProducts = products.map((product: any) => ({
           id: product._id,

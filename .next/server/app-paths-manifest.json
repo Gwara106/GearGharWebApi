@@ -1,7 +1,6 @@
 {
-  "/profile/page": "app/profile/page.js",
-  "/product/[id]/page": "app/product/[id]/page.js",
-  "/page": "app/page.js",
+  "/api/chat/route": "app/api/chat/route.js",
   "/login/page": "app/login/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/admin/login/page": "app/admin/login/page.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js"
 }

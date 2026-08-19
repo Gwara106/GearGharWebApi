@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Simple JWT verification for middleware (without external libraries)
+
+function base64urlDecode(str: string): string {
+  // Replace base64url characters with base64 characters
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding
+  while (base64.length % 4) base64 += '=';
+  return atob(base64);
+}
+
 function verifyJWT(token: string): any {
   try {
     // Split token into parts
@@ -10,9 +19,9 @@ function verifyJWT(token: string): any {
       throw new Error('Invalid token structure');
     }
 
-    // Decode payload (base64)
-    const payload = JSON.parse(atob(parts[1]));
-    
+    // Decode payload (base64url)
+    const payload = JSON.parse(base64urlDecode(parts[1]));
+
     // Check expiration
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       throw new Error('Token expired');
