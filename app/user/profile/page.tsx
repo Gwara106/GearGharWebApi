@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Mail, Save, Lock, Edit, Camera } from 'lucide-react';
+import { resolveProfileImageUrl } from '@/app/profile/page';
 
 export default function UserProfilePage() {
   const { user, isAuthenticated, isLoading, token, updateUser } = useAuth();
@@ -25,32 +26,19 @@ export default function UserProfilePage() {
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  const getProfileImageUrl = (image?: string, profilePicture?: string) => {
-    const pic = image || profilePicture;
-    if (!pic) return '';
-    
-    // Handle different path formats
-    if (pic.startsWith('http')) {
-      return pic; // Full URL
-    } else if (pic.startsWith('/uploads/')) {
-      // Add cache busting timestamp
-      const timestamp = Date.now();
-      return `${pic}?t=${timestamp}`;
-    } else if (pic === 'default-profile.png') {
-      return '/placeholder.svg'; // Use placeholder
-    } else {
-      // Add cache busting timestamp for relative paths
-      const timestamp = Date.now();
-      return `${pic}?t=${timestamp}`;
-    }
-  };
+  // Shared with app/profile/page.tsx so both pages resolve identically. This
+  // page previously preferred `image` over `profilePicture` while the other
+  // preferred `profilePicture` over `image`, so the two views of the same user
+  // could show different pictures.
+  const profileImageUrl = resolveProfileImageUrl(
+    user?.profilePicture,
+    user?.image,
+    user?.updatedAt ? String(user.updatedAt) : undefined
+  );
 
   useEffect(() => {
     if (user) {
-      const imageUrl = user.image || user.profilePicture;
-      if (imageUrl) {
-        setImagePreview(getProfileImageUrl(imageUrl, user.profilePicture));
-      }
+      setImagePreview(profileImageUrl);
       // Set form data from auth context user
       setFormData({
         firstName: user.firstName,
@@ -63,15 +51,13 @@ export default function UserProfilePage() {
     }
   }, [user]);
 
-  // Update image preview when user data changes (for cross-page consistency)
+  // Keep the preview in step with the user record, unless a local file is
+  // staged (in which case the preview is a data: URL we must not overwrite).
   useEffect(() => {
-    if (user) {
-      const imageUrl = user.image || user.profilePicture;
-      if (imageUrl) {
-        setImagePreview(getProfileImageUrl(imageUrl, user.profilePicture));
-      }
+    if (!imageFile) {
+      setImagePreview(profileImageUrl);
     }
-  }, [user?.image, user?.profilePicture]);
+  }, [profileImageUrl, imageFile]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated()) {
@@ -93,7 +79,7 @@ export default function UserProfilePage() {
         newPassword: '',
         confirmPassword: ''
       });
-      setImagePreview(getProfileImageUrl(user.image, user.profilePicture));
+      setImagePreview(profileImageUrl);
       setImageFile(null);
     }
     setIsEditing(false);
@@ -171,11 +157,8 @@ export default function UserProfilePage() {
       const data = await response.json();
       setSuccess('Profile updated successfully!');
       
-      // Update image preview with new profile picture for cache busting
-      const newImageUrl = data.user.image || data.user.profilePicture;
-      if (newImageUrl) {
-        setImagePreview(getProfileImageUrl(newImageUrl, data.user.profilePicture));
-      }
+      // The preview effect picks the new picture up from the refreshed user.
+      setImageFile(null);
       
       // Update auth context with new user data
       if (updateUser) {
@@ -214,7 +197,7 @@ export default function UserProfilePage() {
         newPassword: '',
         confirmPassword: ''
       });
-      setImagePreview(getProfileImageUrl(user.image, user.profilePicture));
+      setImagePreview(profileImageUrl);
       setImageFile(null);
     }
     setIsEditing(false);

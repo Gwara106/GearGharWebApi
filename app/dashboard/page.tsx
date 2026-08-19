@@ -52,8 +52,10 @@ export default function DashboardPage() {
     if (user) {
       setProfileData({
         firstName: user.firstName || '',
+        // The model field is `phoneNumber`; `phone` only ever existed on the
+        // removed mock payload, so reading it alone left the box empty.
         lastName: user.lastName || '',
-        phone: user.phone || '',
+        phone: user.phoneNumber || user.phone || '',
         address: user.address || ''
       });
     }

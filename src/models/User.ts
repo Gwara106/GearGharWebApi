@@ -112,6 +112,11 @@ const UserSchema: Schema = new Schema({
     type: String,
     trim: true,
   },
+  address: {
+    type: String,
+    trim: true,
+    maxlength: [300, 'Address cannot exceed 300 characters'],
+  },
   profilePicture: {
     type: String,
     default: 'default-profile.png',

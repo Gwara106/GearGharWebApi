@@ -6,10 +6,53 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { User, Mail, Calendar, Shield, LogOut, ShoppingBag, Settings, Camera, Edit } from 'lucide-react';
 
+/**
+ * Resolves a stored profile-picture value to a URL the browser can load.
+ *
+ * Pure by design — it takes no timestamp and reads no clock. The previous
+ * version called `Date.now()` and was invoked directly inside JSX (twice per
+ * render), so `<img src>` changed on every render, the browser refetched every
+ * render, and the console filled with repeated logs and 404s.
+ *
+ * Cache busting is handled separately via `updatedAt`, which only changes when
+ * the record actually changes.
+ */
+export function resolveProfileImageUrl(
+  profilePicture?: string,
+  legacyImage?: string,
+  version?: string
+): string {
+  const raw = (profilePicture || legacyImage || '').trim();
+  if (!raw) return '';
+
+  // Mongoose defaults profilePicture to this sentinel; it is not a real file.
+  if (raw === 'default-profile.png') return '';
+
+  let url: string;
+
+  if (/^https?:\/\//i.test(raw)) {
+    return raw; // Absolute remote URL — never rewrite or cache-bust.
+  } else if (raw.startsWith('/uploads/')) {
+    url = raw;
+  } else if (raw.includes('profiles/')) {
+    // Legacy Flutter path: /uploads/profiles/x.jpg -> /uploads/users/x.jpg
+    url = raw.replace('profiles/', 'users/');
+  } else if (raw.startsWith('/')) {
+    // Any other absolute public path (e.g. '/placeholder.svg') is already
+    // servable. The old code fell through to the bare-filename branch and
+    // produced '/uploads/users//placeholder.svg', which 404s.
+    return raw;
+  } else {
+    url = `/uploads/users/${raw}`; // Bare filename stored by the upload route.
+  }
+
+  return version ? `${url}?v=${encodeURIComponent(version)}` : url;
+}
+
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout, isLoading, updateUser } = useAuth();
+  const { user, isAuthenticated, logout, isLoading, updateUser, refreshUser } = useAuth();
   const router = useRouter();
-  
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
@@ -23,35 +66,30 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Profile fetching disabled to prevent infinite loops
-  // We'll rely on auth context data and upload responses
+  // Reconcile the cached cookie user with the database, once on mount.
+  //
+  // This fetch used to be deleted outright ("disabled to prevent infinite
+  // loops"). The loop came from an effect that depended on the very state it
+  // wrote; `refreshUser` is a stable useCallback in the provider, so a
+  // mount-only effect cannot retrigger itself.
   useEffect(() => {
-    // No profile fetching - use auth context data only
-  }, []);
-
-  // Set initial image preview when user data loads
-  useEffect(() => {
-    if (user) {
-      // Prioritize profilePicture over image (backend updates profilePicture)
-      const imageUrl = user.profilePicture || user.image;
-      if (imageUrl) {
-        if (imageUrl.startsWith('http')) {
-          setImagePreview(imageUrl);
-        } else if (imageUrl.startsWith('/uploads/')) {
-          // Add cache busting timestamp to force image refresh
-          const timestamp = Date.now();
-          setImagePreview(`${imageUrl}?t=${timestamp}`);
-        } else if (imageUrl.includes('profiles/')) {
-          // Handle old Flutter app paths - convert to users path
-          const timestamp = Date.now();
-          setImagePreview(`${imageUrl.replace('profiles/', 'users/')}?t=${timestamp}`);
-        } else {
-          const timestamp = Date.now();
-          setImagePreview(`/uploads/users/${imageUrl}?t=${timestamp}`);
-        }
-      }
+    if (!isLoading && isAuthenticated()) {
+      refreshUser();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  // Stable cache-buster: only changes when the record actually changes.
+  const imageVersion = user?.updatedAt ? String(user.updatedAt) : undefined;
+  const profileImageUrl = resolveProfileImageUrl(user?.profilePicture, user?.image, imageVersion);
+
+  // Keep the edit-form preview in step with the card, without clobbering a
+  // locally selected file (imageFile set => preview is a data: URL).
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(profileImageUrl);
+    }
+  }, [profileImageUrl, imageFile]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,40 +137,16 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
-      console.log('Upload response:', data);
-      console.log('Current user data before update:', user);
-      
-      // Update user data
+
+      // Clearing the local file first lets the preview effect take over from
+      // the refreshed user, so the card and the form cannot drift apart.
+      setImageFile(null);
+
       if (updateUser) {
         updateUser(data.user);
-        console.log('Called updateUser with:', data.user);
-      }
-
-      // Update image preview with new profile picture
-      const newImageUrl = data.user.profilePicture || data.user.image;
-      console.log('New image URL from response:', newImageUrl);
-      if (newImageUrl) {
-        if (newImageUrl.startsWith('http')) {
-          setImagePreview(newImageUrl);
-        } else if (newImageUrl.startsWith('/uploads/')) {
-          // Add cache busting timestamp to force image refresh
-          const timestamp = Date.now();
-          const cacheBustedUrl = `${newImageUrl}?t=${timestamp}`;
-          setImagePreview(cacheBustedUrl);
-        } else if (newImageUrl.includes('profiles/')) {
-          // Handle old Flutter app paths - convert to users path
-          const timestamp = Date.now();
-          const cacheBustedUrl = `${newImageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
-          setImagePreview(cacheBustedUrl);
-        } else {
-          const timestamp = Date.now();
-          const cacheBustedUrl = `/uploads/users/${newImageUrl}?t=${timestamp}`;
-          setImagePreview(cacheBustedUrl);
-        }
       }
 
       setSuccess('Profile picture updated successfully!');
-      setImageFile(null);
       setIsEditing(false);
 
       // Clear success message after 3 seconds
@@ -141,35 +155,6 @@ export default function ProfilePage() {
       setError(err.message || 'Failed to upload profile picture');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const getProfileImageUrl = () => {
-    // Prioritize profilePicture over image (backend updates profilePicture)
-    const imageUrl = user?.profilePicture || user?.image;
-    console.log('getProfileImageUrl called - user data:', { image: user?.image, profilePicture: user?.profilePicture });
-    console.log('getProfileImageUrl - final imageUrl:', imageUrl);
-    if (!imageUrl) return '';
-    
-    // Handle different path formats
-    if (imageUrl.startsWith('http')) {
-      return imageUrl; // Full URL
-    } else if (imageUrl.startsWith('/uploads/')) {
-      // Add cache busting timestamp
-      const timestamp = Date.now();
-      const cacheBustedUrl = `${imageUrl}?t=${timestamp}`;
-      console.log('getProfileImageUrl - returning cache-busted URL:', cacheBustedUrl);
-      return cacheBustedUrl;
-    } else if (imageUrl.includes('profiles/')) {
-      // Handle old Flutter app paths - convert to users path
-      const timestamp = Date.now();
-      const cacheBustedUrl = `${imageUrl.replace('profiles/', 'users/')}?t=${timestamp}`;
-      return cacheBustedUrl;
-    } else {
-      // Assume it's a filename
-      const timestamp = Date.now();
-      const cacheBustedUrl = `/uploads/users/${imageUrl}?t=${timestamp}`;
-      return cacheBustedUrl;
     }
   };
 
@@ -226,11 +211,16 @@ export default function ProfilePage() {
                   {/* Profile Picture with Camera Icon */}
                   <div className="relative inline-block mb-4">
                     <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center overflow-hidden">
-                      {getProfileImageUrl() ? (
-                        <img 
-                          src={getProfileImageUrl()} 
+                      {profileImageUrl ? (
+                        <img
+                          src={profileImageUrl}
                           alt={`${user.firstName} ${user.lastName}`}
                           className="w-full h-full object-cover"
+                          // A broken stored path must not leave a permanent
+                          // broken-image icon, and must not re-trigger a fetch.
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       ) : (
                         <User size={40} className="text-white" />
@@ -328,7 +318,7 @@ export default function ProfilePage() {
                         <button
                           onClick={() => {
                             setImageFile(null);
-                            setImagePreview(getProfileImageUrl());
+                            setImagePreview(profileImageUrl);
                           }}
                           className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                         >

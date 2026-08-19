@@ -1,0 +1,139 @@
+# Mermaid Architecture Diagram
+
+```mermaid
+%% {init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1e293b' }}} %%
+
+%% ============================
+%% TIER 1: USER & FRONTEND
+%% ============================
+
+subgraph FRONTEND [User & Frontend]
+    direction LR
+    USER[Rider / Rider's Browser]
+    WIDGET[Chat Widget<br/>(ChatWidget.tsx)]
+    BROWSER[Next.js Browser<br/>(React 18 + Tailwind]]
+    NAV[Header & Navigation<br/>(Header.tsx)]
+    CATALOG[Shop & Product Pages<br/>(ProductCard, Category filters]]
+    CART[Shopping Cart<br/>(CartContext + localStorage)]
+end
+
+%% ============================
+%% TIER 2: API LAYER
+%% ============================
+
+subgraph API_LAYER [API Layer<br/>(Next.js Routes + Express)]
+    direction LR
+    CHAT_API["POST /api/chat<br/>handleChat orchestrator"]
+    AUTH_API["POST /api/auth/*<br/>register, login, profile"]
+    CATALOG_API["GET/POST /api/products/*<br/>search, catalog queries"]
+    ADMIN_API["GET/POST/PUT/DELETE /api/admin/*<br/>user & catalog management"]
+    MIDDLEWARE["Next.js Middleware<br/>JWT verification from cookies"]
+end
+
+%% ============================
+%% TIER 3: BUSINESS LOGIC (SERVICE LAYER)
+%% ============================
+
+subgraph BUSINESS_LOGIC [Business Logic Layer<br/>(9 Services)]
+    direction LR
+    NLU[motorcycle-nlu.service.ts<br/>Intent, motorcycle, categories, slots]
+    KNOWLEDGE[knowledge-retrieval.service.ts<br/>Maintenance, symptoms, glossary]
+    PRODUCTS[product-retrieval.service.ts<br/>RRF multi-channel retrieval]
+    FITMENT[compatibility.service.ts<br/>Four-valued verdict engine]
+    GROUNDING[grounding.service.ts<br/>Verification, grounding pack, violations]
+    GEMINI[gemini.service.ts<br/>Gemini REST client, structured generation]
+    CONVERSATION[conversation.service.ts<br/>Context, persist turn, remember motorcycle]
+    EXPLANATION[explanation.service.ts<br/>Reason chips, spec comparison]
+    AUTH[auth.service.ts<br/>Register, login, JWT tokens]
+end
+
+%% ============================
+%% TIER 4: DATABASE
+%% ============================
+
+subgraph DATABASE [MongoDB Database]
+    direction LR
+    USERS[users collection<br/>Accounts, garage, preferences]
+    MOTORCYCLES[motorcycles collection<br/>Catalogue + aliases]
+    PRODUCTS_DB[products collection<br/>Catalogue + specs + fitment flags]
+    COMPAT[productcompatibilities collection<br/>Fitment links (specific + universal)]
+    ORDERS[orders collection<br/>Order lifecycle + status history]
+    CHATS[chatconversations collection<br/>Server-side conversation memory]
+    FEEDBACK[chatfeedbacks collection<br/>Per-turn human judgement]
+    ANALYTICS[chatanalyticsevents collection<br/>Per-turn analytics for thesis]
+    VIOLATIONS[groundingviolations collection<br/>Hallucination measurement]
+    MAINT_TASKS[maintenancetasks collection<br/>100+ maintenance documents]
+    SYMPTOM_RULES[symptomrules collection<br/>100+ diagnostic rules]
+    PART_GLOSSARY[partglossaries collection<br/>One per taxonomy slug]
+end
+
+%% ============================
+
+%% ============================%% FLOW ARROWS %% ============================
+
+%% User → Frontend
+USER --> WIDGET
+USER --> BROWSER
+USER --> NAV
+USER --> CATALOG
+USER --> CART
+
+%% Frontend → API Layer
+WIDGET --> CHAT_API
+CATALOG --> CATALOG_API
+NAV --> AUTH_API
+CART --> AUTH_API
+
+%% API Layer → Business Logic (fan-out)
+CHAT_API --> NLU
+CHAT_API --> KNOWLEDGE
+CHAT_API --> PRODUCTS
+CHAT_API --> FITMENT
+CHAT_API --> GROUNDING
+CHAT_API --> GEMINI
+CHAT_API --> CONVERSATION
+CHAT_API --> EXPLANATION
+CHAT_API --> AUTH
+
+%% Business Logic → Database (arrows point from service to relevant collections)
+NLU --> MOTORCYCLES
+KNOWLEDGE --> MAINT_TASKS
+KNOWLEDGE --> SYMPTOM_RULES
+KNOWLEDGE --> PART_GLOSSARY
+PRODUCTS --> PRODUCTS_DB
+PRODUCTS --> COMPAT
+PRODUCTS --> ORDERS
+FITMENT --> COMPAT
+GROUNDING --> VIOLATIONS
+GROUNDING --> CHATS
+GROUNDING --> ANALYTICS
+CONVERSATION --> USERS
+CONVERSATION --> CHATS
+CONVERSATION --> ORDERS
+EXPLANATION --> PRODUCTS_DB
+AUTH --> USERS
+
+%% Database → Business Logic (reverse arrows for data retrieval)
+MOTORCYCLES --> NLU
+PRODUCTS_DB --> PRODUCTS
+COMPAT --> FITMENT
+VIOLATIONS --> GROUNDING
+CHATS --> CONVERSATION
+ANALYTICS --> GROUNDING
+USERS --> AUTH
+CHATS --> CONVERSATION
+
+%% Gemini API (conditional)
+GEMINI -->|when configured & verified| GROUNDING
+
+%% Style notes
+classDef frontend fill:#3b82f6,color:#white,stroke:#1e40af,stroke-width:2px;
+classDef api fill:#f59e0b,color:#white,stroke:#d97706,stroke-width:2px;
+classDef business fill:#8b5cf6,color:#white,stroke:#7c3aed,stroke-width:2px;
+classDef database fill:#10b981,color:#white,stroke:#059669,stroke-width:2px;
+
+class USER,WIDGET,BROWSER,NAV,CATALOG,CART frontend;
+class CHAT_API,AUTH_API,CATALOG_API,ADMIN_API,MIDDLEWARE api;
+class NLU,KNOWLEDGE,PRODUCTS,FITMENT,GROUNDING,GEMINI,CONVERSATION,EXPLANATION,AUTH business;
+class USERS,MOTORCYCLES,PRODUCTS_DB,COMPAT,ORDERS,CHATS,FEEDBACK,ANALYTICS,VIOLATIONS,MAINT_TASKS,SYMPTOM_RULES,PART_GLOSSARY database;
+```
